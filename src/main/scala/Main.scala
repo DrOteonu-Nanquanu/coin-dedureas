@@ -1,12 +1,14 @@
 import parser.FolseqTPTPParser
-
-import scala.util.parsing.combinator._
+import sys.process._
 
 object Main {
   def main(args: Array[String]): Unit = {
     println("Hello World")
 
-    val parseResult = FolseqTPTPParser.parse(FolseqTPTPParser.statement, "Predicate(function(\"argOne\", argTwo), argThree)")
-    println(parseResult.get.Content)
+    println(FolseqTPTPParser.parse(FolseqTPTPParser.quantifiedFormula, """![a from p_]: P(a, "b")"""))
+
+    //val result = Eprover.execute("/home/jcmaas/Documents/coin-dedureas/example_db.tptp")
+
+    //println(result)
   }
 }
