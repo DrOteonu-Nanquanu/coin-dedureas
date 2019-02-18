@@ -17,13 +17,13 @@ object FolseqTPTPParser extends RegexParsers {
   def unaryConnective = "not" ^^ {TPTPElement.fromAny}
   def binaryConnective = "and"  ^^ {TPTPElement.fromAny} | "or" ^^ {TPTPElement.fromAny} | "=>"  ^^ {TPTPElement.fromAny} | "<=>" ^^ {TPTPElement.fromAny}
 
-  def fofsequa_statement : Parser[TPTPElement] = unaryConnective ~ fofsequa_statement ^^ {case connective ~ stmt => TPTPElement.combine(Array(connective, stmt))} |
-    "(" ~ fofsequa_statement ~ binaryConnective ~ fofsequa_statement ~ ")" ^^ {case _ ~ statement1 ~ connective ~ statement2 ~ _ => TPTPElement.combine(Array(statement1, connective, statement2))} |
-    folAtom
+  def statement : Parser[TPTPElement] = unaryConnective ~ statement ^^ {case connective ~ stmt => TPTPElement.combine(Array(connective, stmt))} |
+    "(" ~ statement ~ binaryConnective ~ statement ~ ")" ^^ {case _ ~ statement1 ~ connective ~ statement2 ~ _ => TPTPElement.combine(Array(statement1, connective, statement2))} |
+    quantifiedFormula | folAtom
   //currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
   def quantifiedFormula = quantifier ~ "[" ~ quantifierArguments ~ "]:" ~ fofsequa_statement ^^ {case quant ~ _ ~ quantArguments ~ _ ~ stmt => TPTPElement.combine(Array(quant, "[", quantArguments, "]:", stmt))}
   def quantifier = "!" ^^ {TPTPElement.fromAny} | "?" ^^ {TPTPElement.fromAny}
-  def quantifierArguments = variableList ^^ {TPTPElement.fromAny} | variable ~ " from " ~ constantSet ^^ {case v ~ _ ~ constant_set => TPTPElement.combine(Array(v, constant_set))}
+  def quantifierArguments = variable ~ " from " ~ constantSet ^^ {case v ~ _ ~ constant_set => TPTPElement.combine(Array(v, constant_set))} | variableList ^^ {TPTPElement.fromAny}
   def variableList: Parser[TPTPElement] = variable | variable ~ variableList ^^ {case v ~ v_list => TPTPElement.combine(Array(v, v_list))}
   def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => TPTPElement.combine(Array("{", elements, "}"))} | patternVar
   def patternVar =  lowercaseID ~ "_" ^^ {case id ~ _ => TPTPElement.combine(Array(id, "_"))}
