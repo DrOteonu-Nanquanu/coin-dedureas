@@ -17,11 +17,11 @@ object FolseqTPTPParser extends RegexParsers {
   def unaryConnective = "not" ^^ {TPTPElement.fromAny}
   def binaryConnective = "and"  ^^ {TPTPElement.fromAny} | "or" ^^ {TPTPElement.fromAny} | "=>"  ^^ {TPTPElement.fromAny} | "<=>" ^^ {TPTPElement.fromAny}
 
-  def statement : Parser[TPTPElement] = unaryConnective ~ statement ^^ {case connective ~ stmt => TPTPElement.combine(Array(connective, stmt))} |
-    "(" ~ statement ~ binaryConnective ~ statement ~ ")" ^^ {case _ ~ statement1 ~ connective ~ statement2 ~ _ => TPTPElement.combine(Array(statement1, connective, statement2))} |
+  def fofsequa_statement : Parser[TPTPElement] = unaryConnective ~ fofsequa_statement ^^ {case connective ~ stmt => TPTPElement.combine(Array(connective, stmt))} |
+    "(" ~ fofsequa_statement ~ binaryConnective ~ fofsequa_statement ~ ")" ^^ {case _ ~ statement1 ~ connective ~ statement2 ~ _ => TPTPElement.combine(Array(statement1, connective, statement2))} |
     folAtom
   //currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
-  def quantifiedFormula = quantifier ~ "[" ~ quantifierArguments ~ "]:" ~ statement ^^ {case quant ~ _ ~ quantArguments ~ _ ~ stmt => TPTPElement.combine(Array(quant, "[", quantArguments, "]:", stmt))}
+  def quantifiedFormula = quantifier ~ "[" ~ quantifierArguments ~ "]:" ~ fofsequa_statement ^^ {case quant ~ _ ~ quantArguments ~ _ ~ stmt => TPTPElement.combine(Array(quant, "[", quantArguments, "]:", stmt))}
   def quantifier = "!" ^^ {TPTPElement.fromAny} | "?" ^^ {TPTPElement.fromAny}
   def quantifierArguments = variableList ^^ {TPTPElement.fromAny} | variable ~ " from " ~ constantSet ^^ {case v ~ _ ~ constant_set => TPTPElement.combine(Array(v, constant_set))}
   def variableList: Parser[TPTPElement] = variable | variable ~ variableList ^^ {case v ~ v_list => TPTPElement.combine(Array(v, v_list))}
@@ -29,7 +29,7 @@ object FolseqTPTPParser extends RegexParsers {
   def patternVar =  lowercaseID ~ "_" ^^ {case id ~ _ => TPTPElement.combine(Array(id, "_"))}
   def constantSetElements: Parser[TPTPElement] = constant | constant ~ constantSetElements ^^ {case const ~ constSetElements => TPTPElement.combine(Array(const, constSetElements))}
 
-  def document: Parser[String] = statement ^^ {case stmt => stmt.toFOF} | statement ~ document ^^ {case stmt ~ doc => stmt.toFOF + doc}
+  def fofsequa_document: Parser[String] = fofsequa_statement ^^ {case stmt => stmt.toFOF} | fofsequa_statement ~ fofsequa_document ^^ {case stmt ~ doc => stmt.toFOF + doc}
 }
 
 case class TPTPElement(content: String, isConjecture: Boolean = false) {
@@ -56,3 +56,6 @@ object TPTPElement {
 
   def fromAny(element: Any): TPTPElement = new TPTPElement(element.toString, false)
 }
+
+case class LowercaseID(content: String)
+case class uppercaseID(content: String)
