@@ -21,7 +21,7 @@ object FolseqTPTPParser extends RegexParsers {
     "(" ~ statement ~ binaryConnective ~ statement ~ ")" ^^ {case _ ~ statement1 ~ connective ~ statement2 ~ _ => TPTPElement.combine(Array(statement1, connective, statement2))} |
     quantifiedFormula | folAtom
   //currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
-  def quantifiedFormula = quantifier ~ "[" ~ quantifierArguments ~ "]:" ~ fofsequa_statement ^^ {case quant ~ _ ~ quantArguments ~ _ ~ stmt => TPTPElement.combine(Array(quant, "[", quantArguments, "]:", stmt))}
+  def quantifiedFormula = quantifier ~ "[" ~ quantifierArguments ~ "]:" ~ statement ^^ {case quant ~ _ ~ quantArguments ~ _ ~ stmt => TPTPElement.combine(Array(quant, "[", quantArguments, "]:", stmt))}
   def quantifier = "!" ^^ {TPTPElement.fromAny} | "?" ^^ {TPTPElement.fromAny}
   def quantifierArguments = variable ~ " from " ~ constantSet ^^ {case v ~ _ ~ constant_set => TPTPElement.combine(Array(v, constant_set))} | variableList ^^ {TPTPElement.fromAny}
   def variableList: Parser[TPTPElement] = variable | variable ~ variableList ^^ {case v ~ v_list => TPTPElement.combine(Array(v, v_list))}
@@ -29,7 +29,7 @@ object FolseqTPTPParser extends RegexParsers {
   def patternVar =  lowercaseID ~ "_" ^^ {case id ~ _ => TPTPElement.combine(Array(id, "_"))}
   def constantSetElements: Parser[TPTPElement] = constant | constant ~ constantSetElements ^^ {case const ~ constSetElements => TPTPElement.combine(Array(const, constSetElements))}
 
-  def fofsequa_document: Parser[String] = fofsequa_statement ^^ {case stmt => stmt.toFOF} | fofsequa_statement ~ fofsequa_document ^^ {case stmt ~ doc => stmt.toFOF + doc}
+  def fofsequa_document: Parser[String] = statement ^^ {case stmt => stmt.toFOF} | statement ~ fofsequa_document ^^ {case stmt ~ doc => stmt.toFOF + doc}
 }
 
 case class TPTPElement(content: String, isConjecture: Boolean = false) {
@@ -57,5 +57,35 @@ object TPTPElement {
   def fromAny(element: Any): TPTPElement = new TPTPElement(element.toString, false)
 }
 
-case class LowercaseID(content: String)
-case class uppercaseID(content: String)
+case class FofsequaDocument(statements: Array[Statement])
+
+sealed abstract class Statement
+case class BinaryConnectiveStatement(pre_statement: Statement, connective: BinaryConnective, post_statement: Statement) extends Statement
+case class UnaryConnectiveStatement(connective: UnaryConnective, post_statement: Statement) extends Statement
+case class QuantifiedStatement(quantifier: Quantifier, arguments: QuantifierArguments, statement: Statement) extends Statement
+
+sealed abstract class Quantifier
+case class ForAll() extends Quantifier
+case class Exists() extends Quantifier
+
+sealed abstract class QuantifierArguments
+case class ConstantSetQuantiferArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments
+case class BasicQuantiferArguments(variables: Array[Variable]) extends QuantifierArguments
+
+sealed abstract class ConstantSet
+case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet
+case class PatternVar(name: LowercaseID) extends ConstantSet
+
+case class Constant(id: LowercaseID)
+case class Variable(id: LowercaseID)
+case class LowercaseID(name: String)
+case class UppercaseID(name: String)
+
+sealed abstract class UnaryConnective
+case class Not() extends UnaryConnective
+
+sealed abstract class BinaryConnective
+case class And()
+case class Or()
+case class IfThen()
+case class Iff()
