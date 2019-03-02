@@ -63,14 +63,15 @@ sealed abstract class Statement
 case class BinaryConnectiveStatement(pre_statement: Statement, connective: BinaryConnective, post_statement: Statement) extends Statement
 case class UnaryConnectiveStatement(connective: UnaryConnective, post_statement: Statement) extends Statement
 case class QuantifiedStatement(quantifier: Quantifier, arguments: QuantifierArguments, statement: Statement) extends Statement
+case class AtomStatement(predicate: FolPredicate, terms: Array[FolTerm])
 
 sealed abstract class Quantifier
 case class ForAll() extends Quantifier
 case class Exists() extends Quantifier
 
 sealed abstract class QuantifierArguments
-case class ConstantSetQuantiferArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments
-case class BasicQuantiferArguments(variables: Array[Variable]) extends QuantifierArguments
+case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments
+case class BasicQuantifierArguments(variables: Array[Variable]) extends QuantifierArguments
 
 sealed abstract class ConstantSet
 case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet
@@ -89,3 +90,12 @@ case class And()
 case class Or()
 case class IfThen()
 case class Iff()
+
+case class FolPredicate(name: UppercaseID)
+
+sealed abstract class FolTerm()
+case class FunctionApplication(function: FolFunction, terms: Array[FolTerm]) extends FolTerm
+case class ConstantTerm(constant: Constant) extends FolTerm
+case class VariableTerm(variable: Variable) extends FolTerm
+
+case class FolFunction(name: LowercaseID)
