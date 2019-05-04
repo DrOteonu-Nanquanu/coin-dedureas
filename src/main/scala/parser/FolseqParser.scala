@@ -2,7 +2,7 @@ package parser
 
 import scala.util.parsing.combinator._
 
-object FolseqTPTPParser extends RegexParsers {
+object FolseqParser extends RegexParsers {
   def lowercaseID = "[a-z][a-zA-Z]*".r ^^ { new LowercaseID(_) }
   def uppercaseID = "[A-Z][a-zA-Z]*".r ^^ { new UppercaseID(_) }
   def folPredicate = uppercaseID ^^ { new FolPredicate(_) }
@@ -23,8 +23,10 @@ object FolseqTPTPParser extends RegexParsers {
   //currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
   def quantifiedFormula = quantifier ~ "[" ~ quantifierArguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => new QuantifiedStatement(quant, quantArguments, stmt) }
   def quantifier = "!" ^^ {(x) => new ForAll()} | "?" ^^ {(x) => new Exists()}
-  def quantifierArguments = variable ~ " from " ~ constantSet ^^ {case v ~ _ ~ constant_set => new ConstantSetQuantifierArguments(v, constant_set)} | variableList ^^ { new BasicQuantifierArguments(_) }
-  def variableList: Parser[Array[Variable]] = variable ^^ { Array(_) } | variable ~ variableList ^^ { case v ~ v_list => Array(v) ++ v_list }
+  def quantifierArguments = variable ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => new ConstantSetQuantifierArguments(v, constant_set)} | 
+    variableList ^^ { new BasicQuantifierArguments(_) }
+  def variableList: Parser[Array[Variable]] = variable ^^ { Array(_) } |
+    variable ~ variableList ^^ { case v ~ v_list => Array(v) ++ v_list }
   def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => new BasicConstantSet(elements)} | patternVar
   def patternVar =  lowercaseID ~ "_" ^^ { case id ~ _ => new PatternVar(id) }
   def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ constantSetElements ^^ { case const ~ constSetElements => Array(const) ++ constSetElements }
