@@ -1,0 +1,180 @@
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+<head>
+
+<center><title>CodingProtocol</title></center>
+
+<body>
+
+<h1><font color="maroon">Coding Protocol</font></h1>
+<p>
+<h2><font color="teal">Build management</font></h2>
+</p>
+<br>
+<p>
+<li>When using Maven: when adding new artifacts to the pom.xml file, always refer to a specific version of an artifact. If you don't do this, maven may attempt to download the newest version, while the code has not been adapted yet. E.g. you can run into missing goals (because they were deprecated), your code may not compile (because the code refers to deprecated classes), etc. etc.</li>
+</p>
+
+<p>
+<h2><font color="teal">Source code layout</font></h2>
+<br>
+<ul>
+<li>Use spaced tabs, so each tab should consist of whitespaces, and not a TAB symbol.
+   <ul>
+   <li>Recommended: set your text editor to automatically convert the TAB-key to whitespaces.</li>
+   </ul>
+</li>
+<br>
+<li>Use tab size = 3 spaces
+   <ul>
+   <li>Recommended: set your text editor to a tab-width of 3 spaces.</li>
+   </ul>
+</li>
+<br>
+<li>Follow the following style when using curly brackets:</li>
+<pre class="prettyprint">def intelligentMethod() =
+{  [here code]
+   [etc.]
+}
+</pre> 
+<br>
+<li>Start the code on the same line as the opening curly bracket, just as in the example above. So don't do this:</li>
+<pre class="prettyprint">def intelligentMethod() =
+{  
+   [here code]
+   [etc.]
+}
+</pre>
+<br>
+<li>But a space after each comma (',') separating a parameter:</li>
+<pre class="prettyprint">def intelligentMethod(x:Int, y:Int, z:Int)</pre>
+<br>
+<li>Preferably place whitespaces around infix operators and other infix symbols, such as +, ++, =>, and ==:</li>
+<pre class="prettyprint">if( x == 5 ) 
+{  [do this]
+}
+</pre>
+<br>
+<li>Other aspects: do as one sees fit. For example, the following style is also allowed (no space after '(' and before ')')</li>
+<pre class="prettyprint">if(x == 5)</pre>
+<br>
+<li>Vertically align => symbols after cases:</li>
+<pre class="prettyprint">list match
+{  case Nil => None
+   case _   => Some(list(rs.nextInt(list.length)))
+}
+</pre>
+<br>
+<li>A complete example is the following:</li>
+<pre class="prettyprint">object RandomExtras
+{  def nextBetween(ranSeq:Random, min:Int, max:Int):Int = 
+   {  min + ranSeq.nextInt( max - min + 1 )
+   }
+<br>
+   def pickRandomElementFromList[A](list:List[A], rs:Random):Option[A] =
+   {  list match
+      {  case Nil => None
+         case _   => Some(list(rs.nextInt(list.length)))
+      }
+   }
+}
+</pre>
+<br>
+<li>If there is a locally good reason, one may locally deviate from the code layout rules defined in this document. An example are Domain Specific Languages created within Scala.</li>
+</p>
+<li>Optional commenting style: delimit blocks of code you want to refer to/talk about in the following way:
+<pre class="prettyprint">
+// {-generateStarData
+
+... here code ...
+
+
+// }
+</pre>
+The word after {- is the label of the comment block, that you can use to refer to it in other comments.
+An additional advantage of this notation is that the matching branches navigation of your editor (in vim for example: command mode: %) can be used to jump over your comment-blocks.
+</ul>
+<h2><font color="teal">Versioning protocol</font></h2>
+<br>
+<p>
+<ul>
+<li>All new versions of SWiFT store a main version number in the source code. The main version number reflects the progress of the application:
+[major feature package].[minor feature package/noticable improvements exclusing bugfixes].[bugfixes + code improvements not noticeable to the user]
+0.3.2</li>
+<br>
+<li>The complete version is, by example:
+0.3.2/develop/2013.05.21.14.30.20
+which is:
+[main version]/[git branchname]/[git date-time of latest commit]</li>
+<br>
+<li>code improvements not noticeable to user for example: making some code more elegant, changing database schemes. However, if the code clean up for example leads to code which is faster to the extent the user notices it, it should be put in the second number.</li>
+<br>
+<br>
+<li>the 2nd number may only be changed after thorough testing (e.g. using Test-driven Development), it must be a version on which a user can rely.</li>
+<br>
+<li>the git information is read from the git repository itself!</li>
+<br>
+<li>The location of the main version number is in the file GlobalConstant.MAIN_VERSION</li>
+<br>
+<li>the main version file is only changed in the develop branch, not in the branches! First merge your changes into develop, and then change the version number.</li>
+<br>
+<li>note that the part of the main version reflect a subversion: it are changes introduced after the main version, but which have not been consolidated with a new main version number. It is easy to read: it is main version 0.3.2 + the changes introduced in branch B up to the date D.</li>
+<br>
+<li>All noteworthy changes,  between versions must be documented in the document version_history.html. Each set of changes between two subsequent versions must be divided into 2 categories:</li>
+<ul>
+   <li>4user: changes which will change the experience of the user in some way (also for example includes improvements in speed of program executions which may be noticable to the user)</li>
+   <li>4develop: all other changes.</li>
+</ul>
+<br>
+<li>Don't ever add new feature to a version which has been documented in version_history.html/the version has been changed in GlobalConstant.MAIN_VERSION.</li>
+<br>
+<li>To prevent introducing a new version for each small change, wait until there are a sufficient amount of changes. If you want to you can already place them in version_history.html on top in: in coming version</li>
+<br>
+<li>*Each* new version is merged into the branch with the name release</li>
+<br>
+<li>The commits which coincide with a version, carry a tag with the version number in it, in the following form: 
+   version[version number]</li>
+<li>If you intend to use a running instance of an ``experimental branch'', to produce data, that you want to continue using in running instances of the release branch, well... Don't do that! Instead, merge the experimental branch first into develop and release it. This may feel somewhat counter-intuitive, because it is something you want to "try out" - however, you will avoid problems with persistent data migration management. You can merge the experiment such that it remains a bit isolated in the running main application, for example by offering an alternative UI that only shows when the application is started in a certain mode.</li>
+<li>Try to avoid real forking (that is: creating a separate branch with its own formal releases), unless you have a very good reason to do so. So, if you have some ``experimental versions'', which however produce serious data by serious users, first merge this experimental version somehow into the develop branch.</li>
+</ul>
+</p>
+
+
+
+<h4><font color="teal">TODO examples</font></h4>
+<h2><font color="teal">Design Patterns/Architectural Design Requirements</font></h2>
+Read all comments in the SWiFT API containing the words "Programming Protocol". The level of the protocol is indicated with (Level n), where n is an integer. n = 0 is the most basic, important level, for protocols affecting a large part of the application philosophy. The higher the number, the more localised the influence of the protocol. 
+
+Please, at least read the level 0 protocols before starting to contribute to the SWiFT project.
+
+Design Patterns that are general and transfer to other projects, are listed here:
+
+<h3><font color="teal">Divide random and dependent data</font></h3>
+In code that creates random data, which in its turn is used as input for the generation of additional data that depends on this data, if possible and feasible, always clearly divide the two stages with two different coding units that can be called independently. For example, by splitting the two stages into two separate methods. This will make it, among other things, much easier to test the code. The random stage can easily be replaced by hardcoded information in a test routine.
+
+
+<h2><font color="teal">Logging</font></h2>
+When printing to the logfile from the source code, consider tagging some log entries with a unique identifier as follows:
+
+
+<pre class="prettyprint">
+log("   {| LCD y2014_m08_d06_h11_m59_s18 |} Database completely empty, I feel like a Zen-buddhist, dudicon!")
+</pre>
+
+The unique identifier consists of the date-time at/near the moment the log entry was created.
+
+The reason is that it makes it easy to find back these log entries in the log file, even if the text of the log entry is adapted in later versions of the code. Specifically tag log entries that you search for often in the log file. LCD stands for "Log entry Creation Date".
+
+<h2><font color="teal">Testing</font></h2>
+<h3><font color="teal">Test admin account</font></h3>
+It is often needed to test the SWiFT application in the role of an administrator. For this purpose, you can login to the following admin test account (using the running SWiFT Web interface):
+<br /><br />
+email: admin@test.org<br />
+password: asdfasdf<br />
+<br />
+(Note that this account is not available when the application is deployed!)
+
+</body>
+
+</head>
+
