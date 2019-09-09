@@ -19,11 +19,11 @@ fof(degreeLevelTransitivity, axiom, ![Dgr1, Dgr2, Dgr3]:
     ((higherLevel(Dgr1, Dgr2) & higherLevel(Dgr2, Dgr3)) =>
 higherLevel(Dgr1, Dgr3))).
 
-fof(greaterThanTransitivity, axiom, ![X, Y, Z]: (($greater(X, Y) & $greater(Y, Z)) => $greater(X, Z))).
+fof(greaterThanTransitivity, axiom, ![X, Y, Z]: ((greater(X, Y) & greater(Y, Z)) => greater(X, Z))).
 
-fof(numberOrder, axiom, $greater(1, 2) & $greater(2, 3) & $greater(3, 4) & $greater(4, 5) & $greater(5, 6) & $greater(6, 7) & $greater(7, 8) & $greater(8, 9) & $greater(9, 10)).
+fof(numberOrder, axiom, greater('1', '2') & greater('2', '3') & greater('3', '4') & greater('4', '5') & greater('5', '6') & greater('6', '7') & greater('7', '8') & greater('8', '9') & greater('9', '10')).
 
-fof(numberFacts, axiom, ![X, Y]: ($greater(X, Y) => $less(Y, X)) & ![X, Y]: (($less(X, Y) | X = Y) => $lesseq(X, Y)) & ![X, Y]: (($greater(X, Y) | X = Y) => $greatereq(X, Y))).
+fof(numberFacts, axiom, ![X, Y]: (greater(X, Y) => less(Y, X)) & ![X, Y]: ((less(X, Y) | X = Y) => lesseq(X, Y)) & ![X, Y]: ((greater(X, Y) | X = Y) => greatereq(X, Y))).
 """
 
   def main(args: Array[String]): Unit = {
@@ -34,7 +34,7 @@ fof(numberFacts, axiom, ![X, Y]: ($greater(X, Y) => $less(Y, X)) & ![X, Y]: (($l
     val axioms_as_tptp = knowledge_base.to_TPTP()
     val queries = generate_queries(knowledge_base)
 
-    val file_name = "test.txt"
+    val file_name = "eprover-test.tptp"
 
     val file = new File(file_name)
     val writer = new PrintWriter(file)
@@ -54,12 +54,17 @@ fof(numberFacts, axiom, ![X, Y]: ($greater(X, Y) => $less(Y, X)) & ![X, Y]: (($l
     def random_study_type = randomElement(kr_base.study_types)
     def random_study = randomElement(kr_base.studies)
     def random_language_type = randomElement(kr_base.language_types)
+    def random_expertise = randomElement(kr_base.fields_of_expertise)
+    def random_programming_language = randomElement(kr_base.programming_languages);
+    def random_programming_paradigm = randomElement(kr_base.programming_paradigms);
 
     var stringBuilder = new StringBuilder()
     stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Field]: (hasDegree(Person, Field, $random_degree) & hasType(Field, $random_study_type))).\n""")
     stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Field]: (hasDegree(Person, Field, $random_degree) & livesIn(Person, $random_country))).\n""")
     stringBuilder.append(s"""fof(query, question, ?[Person]: (hasDegree(Person, $random_study, $random_degree) & ?[Language]: (speaks(Person, language) & hasType(Language, $random_language_type)))).\n""")
-    stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Level]: (skillLevel(Person, “ScalaProgramming”, Level) & ${"$greatereq"}(Level, 6))).\n)""")
+    stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Level]: (skillLevel(Person, $random_expertise, Level) & greatereq(Level, '6'))).\n""")
+    val lang = random_programming_language;
+    stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Level]: (skillLevel(Person, $lang, Level) & greater(Level, '7') & hasType($lang, $random_programming_paradigm))).""")
 
 
     stringBuilder.toString()
@@ -96,8 +101,13 @@ class KnowledgeBase {
   val provinces = ConstantGenerator.generate_constant_array(150)
   val towns = ConstantGenerator.generate_constant_array(400)
 
+  val programming_languages = ConstantGenerator.generate_constant_array(100)
+  val programming_paradigms = ConstantGenerator.generate_constant_array(5)
+  val programming_languages_paradigms = random_flatmap(programming_languages, 1, 3, (_:String, randomElement(programming_paradigms)))
+
   // generate 10 levels of degrees
   val degree_levels = ConstantGenerator.generate_constant_array(10)
+  val numbers = Array("'1'", "'2'", "'3'", "'4'", "'5'", "'6'", "'7'", "'8'", "'9'", "'10'")
 
   // assign each person 1 to 3 languages
   val people_languages = random_flatmap(people, 1, 3,
@@ -121,8 +131,9 @@ class KnowledgeBase {
   val people_fields_of_expertise = random_flatmap(people, 0, 10,
     (_: String, randomElement(fields_of_expertise))
   )
-  val people_skill_levels = ;
-
+  val people_skill_levels =
+    random_flatmap(people_fields_of_expertise, 0, 1, (person_skill: (String, String)) => (person_skill._1 /*person*/, person_skill._2 /*skill*/, randomElement(numbers))) ++
+      random_flatmap(people, 0, 3, (_:String, randomElement(programming_languages), randomElement(numbers)))
 
   // assign each person 1 town
   val people_towns = people.map((person) => (person, randomElement(towns)))
@@ -155,6 +166,8 @@ class KnowledgeBase {
     add_to_StringBuilder(builder, province_countries, "isPartOf")
     add_to_StringBuilder(builder, studies_types, "hasType")
     add_to_StringBuilder(builder, languages_types, "hasType")
+    add_to_StringBuilder(builder, people_skill_levels, "skillLevel")
+    add_to_StringBuilder(builder, programming_languages_paradigms, "hasType")
 
     builder.toString()
   }
@@ -208,7 +221,7 @@ object ConstantGenerator {
     }
 
     last_constant = next_constant
-    return '"' + next_constant + '"'
+    return '\'' + next_constant + '\''
   }
 
   def generate_constant_array(size: Int) : Array[String] =
