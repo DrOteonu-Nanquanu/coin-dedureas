@@ -21,7 +21,15 @@ higherLevel(Dgr1, Dgr3))).
 
 fof(greaterThanTransitivity, axiom, ![X, Y, Z]: ((greater(X, Y) & greater(Y, Z)) => greater(X, Z))).
 
-fof(numberOrder, axiom, greater('1', '2') & greater('2', '3') & greater('3', '4') & greater('4', '5') & greater('5', '6') & greater('6', '7') & greater('7', '8') & greater('8', '9') & greater('9', '10')).
+fof(numberOrder, axiom, greater('2', '1') &
+ greater('3', '2') &
+ greater('4', '3') &
+ greater('5', '4') &
+ greater('6', '5') &
+ greater('7', '6') &
+ greater('8', '7') &
+ greater('9', '8') &
+ greater('10', '9')).
 
 fof(numberFacts, axiom, ![X, Y]: (greater(X, Y) => less(Y, X)) & ![X, Y]: ((less(X, Y) | X = Y) => lesseq(X, Y)) & ![X, Y]: ((greater(X, Y) | X = Y) => greatereq(X, Y))).
 """
@@ -64,7 +72,7 @@ fof(numberFacts, axiom, ![X, Y]: (greater(X, Y) => less(Y, X)) & ![X, Y]: ((less
     stringBuilder.append(s"""fof(query, question, ?[Person]: (hasDegree(Person, $random_study, $random_degree) & ?[Language]: (speaks(Person, language) & hasType(Language, $random_language_type)))).\n""")
     stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Level]: (skillLevel(Person, $random_expertise, Level) & greatereq(Level, '6'))).\n""")
     val lang = random_programming_language;
-    stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Level]: (skillLevel(Person, $lang, Level) & greater(Level, '7') & hasType($lang, $random_programming_paradigm))).""")
+    stringBuilder.append(s"""fof(query, question, ?[Person]: ?[Level, Language]: (skillLevel(Person, Language, Level) & greater(Level, '7') & hasType(Language, $random_programming_paradigm))).""")
 
 
     stringBuilder.toString()
