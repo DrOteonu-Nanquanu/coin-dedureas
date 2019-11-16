@@ -7,7 +7,7 @@ object FolseqParser extends RegexParsers {
   def uppercaseID = "[A-Z][a-zA-Z]*".r ^^ { new UppercaseID(_) }
   def folPredicate = uppercaseID ^^ { new FolPredicate(_) }
   def variable = lowercaseID ^^ { new Variable(_) }
-  def constant = "\"" ~ lowercaseID ~ "\"" ^^ { case _ ~ name ~ _ => new Constant(name) }
+  def constant = "\'" ~ lowercaseID ~ "\'" ^^ { case _ ~ name ~ _ => new Constant(name) }
 
   def folFunction = lowercaseID ^^ { new FolFunction(_) }
   def folTermList : Parser[Array[FolTerm]] = folTerm ~ ", *".r ~ folTermList ^^ { case term ~ _ ~ termList => Array(term) ++ termList } | folTerm ^^ { Array(_) }

@@ -1,0 +1,9 @@
+target
+*.class
+*.iml
+*.ipr
+*.iws
+.idea
+out
+eprover-executable
+eprover-test.tptp

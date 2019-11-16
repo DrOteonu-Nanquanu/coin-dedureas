@@ -1,0 +1,43 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage[english]{babel}
+
+
+\begin{document}
+The algorithm:
+\begin{verbatim}
+fn into_constant_sets(eprover_answers, constant_set_count):
+    let answers = copy(eprover_answers)
+    let composables = array(constant_set_count)
+
+    for i in 0..constant_set_count:
+        composables[i] = hashset(copy(eprover_answers))
+
+    loop:
+        let (comp1, comp2) be a pair of composables such that they are the same,
+            except for one constant set const_set
+            
+        if there is no such pair:
+            break
+        else:
+            let comp3 = copy(comp1)
+            comp3[const_set] = union(comp1[const_set], comp2[const_set])
+
+            composables.remove(comp1)
+            composables.remove(comp2)
+            composables.add(comp3)
+            answers.add(comp3)
+    
+    return answers
+\end{verbatim}
+
+first part:
+\begin{verbatim}
+
+\end{verbatim}
+
+\end{document}
