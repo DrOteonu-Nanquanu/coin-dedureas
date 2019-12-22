@@ -7,3 +7,5 @@ target
 out
 eprover-executable
 eprover-test.tptp
+
+*.pdf

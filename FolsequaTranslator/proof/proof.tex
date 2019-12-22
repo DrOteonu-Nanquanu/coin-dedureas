@@ -11,11 +11,11 @@
 The algorithm:
 \begin{verbatim}
 fn into_constant_sets(eprover_answers, constant_set_count):
-    let answers = copy(eprover_answers)
+    let answers = list()
     let composables = array(constant_set_count)
 
     for i in 0..constant_set_count:
-        composables[i] = hashset(copy(eprover_answers))
+        composables[i] = hashmap()
 
     loop:
         let (comp1, comp2) be a pair of composables such that they are the same,
@@ -33,6 +33,23 @@ fn into_constant_sets(eprover_answers, constant_set_count):
             answers.add(comp3)
     
     return answers
+
+fn add_to_answers(answer, composables, answer_list, index):
+    answers.add(answer)
+    
+    # try adding the answer to the composables, but if there is already one
+        with this key, get the old value.
+    old_value = composables[index].try_add(answer.without(index), answers[index])
+
+    combinations = a collection of all constant sets C such that C is a subset of
+        the union of old_value and answer[index], but is a strict superset of its
+        intersection.
+
+    if already_exists:
+        for i in 0..composables.length:
+            if i != index:
+                add_to_answers(
+
 \end{verbatim}
 
 first part:
