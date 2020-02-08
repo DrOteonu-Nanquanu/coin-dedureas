@@ -16,5 +16,19 @@ object Main {
     // println(Eprover.evaluate_TPTP("""fof(goal, conjecture, livesIn("Marit", "Norway"))."""))
 
     println(FofsequaToFof.stringify(AtomStatement(FolPredicate(UppercaseID("P")), Array())))
+
+    val parsed = FolseqParser.parse(FolseqParser.statement, "![x]: P(x) ")
+
+    if (parsed.successful) {
+      println("Parse Correct")
+      println(parsed.get)
+      println(FofsequaToFof.stringify(parsed.get))
+    }
+    else {
+      println("Parse Error")
+    }
+
+
+    // println(FofsequaToFof.stringify())
   }
 }
