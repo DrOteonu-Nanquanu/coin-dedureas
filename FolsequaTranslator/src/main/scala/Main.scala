@@ -43,6 +43,11 @@ object Main {
       println(FolseqParser.parse(FolseqParser.fofsequa_document, test))
     }
 
+    println(FolseqParser.parse(FolseqParser.variableList, "a,b"))
+    println(FolseqParser.parse(FolseqParser.quantifierArguments, "a,b"))
+    println(FolseqParser.parse(FolseqParser.quantifiedFormula, "![a,b]: P(a, b)"))
+    println(FolseqParser.parse(FolseqParser.quantifiedFormula, "![a]: P(a, b)"))
+
     // println(FolseqParser.parse(FolseqParser.fofsequa_document, """P("a") and P("b")"""))
     // println(FolseqParser.parse(FolseqParser.quantifiedFormula, """![a from p_]: P(a, "b")"""))
   }
@@ -56,7 +61,9 @@ object Main {
     println("test translate")
 
     val tests = Array(
-      "![x]: P(x) "
+      "![x]: P(x)",
+      "![x,y]: R(x, y)",
+      "![x]: (P(x) and (Q('a', x) => R(x))) or P('a')"
     )
 
     for(test_fofsequa_string <- tests) {
@@ -69,6 +76,7 @@ object Main {
       }
       else {
         println("Parse error in:" + test_fofsequa_string)
+        println(parsed)
       }
     }
   }
