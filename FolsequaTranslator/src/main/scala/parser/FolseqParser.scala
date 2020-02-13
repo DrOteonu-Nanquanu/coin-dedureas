@@ -29,7 +29,7 @@ object FolseqParser extends RegexParsers {
     variable ~ "," ~ variableList ^^ { case v ~ _ ~ v_list => Array(v) ++ v_list }
   def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => new BasicConstantSet(elements)} | patternVar
   def patternVar =  lowercaseID ~ "_" ^^ { case id ~ _ => new PatternVar(id) }
-  def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ constantSetElements ^^ { case const ~ constSetElements => Array(const) ++ constSetElements }
+  def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => Array(const) ++ constSetElements }
 
 //  def fofsequa_document: Parser[Array[Statement]] = statement ^^ { Array(_) } | statement ~ "\n" ~ fofsequa_document ^^ {case stmt ~ _ ~ doc => Array(stmt) ++ doc }
   def fofsequa_document: Parser[List[Statement]] = statement ~ ((";" ~ statement) ^^ {case _ ~ stmt => stmt}).* ^^ {

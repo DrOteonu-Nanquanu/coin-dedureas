@@ -64,6 +64,7 @@ object Main {
       "![x]: P(x)",
       "![x,y]: R(x, y)",
       "![x]: (P(x) and (Q('a', x) => R(x))) or P('a')",
+      "P(x, y)",
       """P('x');
         |R('y')""".stripMargin
     )
