@@ -31,7 +31,10 @@ object FolseqParser extends RegexParsers {
   def patternVar =  lowercaseID ~ "_" ^^ { case id ~ _ => new PatternVar(id) }
   def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ constantSetElements ^^ { case const ~ constSetElements => Array(const) ++ constSetElements }
 
-  def fofsequa_document: Parser[Array[Statement]] = statement ^^ { Array(_) } | statement ~ fofsequa_document ^^ {case stmt ~ doc => Array(stmt) ++ doc }
+//  def fofsequa_document: Parser[Array[Statement]] = statement ^^ { Array(_) } | statement ~ "\n" ~ fofsequa_document ^^ {case stmt ~ _ ~ doc => Array(stmt) ++ doc }
+  def fofsequa_document: Parser[List[Statement]] = statement ~ ((";" ~ statement) ^^ {case _ ~ stmt => stmt}).* ^^ {
+    case first_statement ~ statement_list => first_statement :: statement_list
+  }
 }
 
 case class TPTPElement(content: String, isConjecture: Boolean = false) {

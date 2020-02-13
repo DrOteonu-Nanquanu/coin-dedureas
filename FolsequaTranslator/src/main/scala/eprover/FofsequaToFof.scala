@@ -3,9 +3,10 @@ package eprover
 import parser._
 
 object FofsequaToFof {
-    def from_parsed_folsequa (document: Array[Statement]) : String = {
-        document.foldLeft("")((accumulator, statement) => accumulator + stringify(statement))
-    }
+    def stringify (document: List[Statement]) : String =
+        document.foldLeft("")((accumulator, statement) =>
+            accumulator + stringify(statement) + ".\n"
+        )
 
     def stringify(statement: Statement) : String = statement match {
         case BinaryConnectiveStatement(pre_statement, connective, post_statement) => "(" + stringify(pre_statement) + stringify(connective) + stringify(post_statement) + ")"

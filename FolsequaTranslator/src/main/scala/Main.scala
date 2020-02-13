@@ -63,11 +63,13 @@ object Main {
     val tests = Array(
       "![x]: P(x)",
       "![x,y]: R(x, y)",
-      "![x]: (P(x) and (Q('a', x) => R(x))) or P('a')"
+      "![x]: (P(x) and (Q('a', x) => R(x))) or P('a')",
+      """P('x');
+        |R('y')""".stripMargin
     )
 
     for(test_fofsequa_string <- tests) {
-      val parsed = FolseqParser.parse(FolseqParser.statement, test_fofsequa_string)
+      val parsed = FolseqParser.parseAll(FolseqParser.fofsequa_document, test_fofsequa_string)
 
       if (parsed.successful) {
         println("Parsed correctly: " + test_fofsequa_string)
