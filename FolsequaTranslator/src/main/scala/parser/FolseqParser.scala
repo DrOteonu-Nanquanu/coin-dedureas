@@ -25,8 +25,9 @@ object FolseqParser extends RegexParsers {
   def quantifier = "!" ^^ {(x) => new ForAll()} | "?" ^^ {(x) => new Exists()}
   def quantifierArguments = variable ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => new ConstantSetQuantifierArguments(v, constant_set)} | 
     variableList ^^ { new BasicQuantifierArguments(_) }
-  def variableList: Parser[Array[Variable]] = variable ^^ { Array(_) } |
-    variable ~ "," ~ variableList ^^ { case v ~ _ ~ v_list => Array(v) ++ v_list }
+  /*def variableList: Parser[Array[Variable]] = variable ^^ { Array(_) } |
+    variable ~ "," ~ variableList ^^ { case v ~ _ ~ v_list => Array(v) ++ v_list }*/
+  def variableList: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
   def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => new BasicConstantSet(elements)} | patternVar
   def patternVar =  lowercaseID ~ "_" ^^ { case id ~ _ => new PatternVar(id) }
   def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => Array(const) ++ constSetElements }
@@ -74,7 +75,7 @@ case class Exists() extends Quantifier
 
 sealed abstract class QuantifierArguments
 case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments
-case class BasicQuantifierArguments(variables: Array[Variable]) extends QuantifierArguments
+case class BasicQuantifierArguments(variables: List[Variable]) extends QuantifierArguments
 
 sealed abstract class ConstantSet
 case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet
