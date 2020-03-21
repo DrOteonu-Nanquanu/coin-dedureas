@@ -6,13 +6,17 @@ import parser._
 object FofsequaToFof {
     def stringify (document: List[Statement]) : String =
         document.foldLeft("")((accumulator, statement) =>
-            accumulator + stringify(statement) + ".\n"
+            "fof(numberFacts, axiom," + accumulator + stringify(statement, true) + ").\n"
         )
 
-    def stringify(statement: Statement) : String = statement match {
+    def stringify(statement: Statement, is_upper_level: Boolean = false) : String = statement match {
         case BinaryConnectiveStatement(pre_statement, connective, post_statement) => "(" + stringify(pre_statement) + stringify(connective) + stringify(post_statement) + ")"
         case UnaryConnectiveStatement(connective, post_statement) => stringify(connective) + stringify(post_statement)
-        case QuantifiedStatement(quantifier, arguments, statement) => stringify(quantifier) + "[" + stringify(arguments) + "]: " + stringify(statement)
+
+        case QuantifiedStatement(quantifier, arguments, statement) => {
+            stringify(QuantifiedStatement(quantifier, arguments, statement), is_upper_level)
+        }
+
         case AtomStatement(predicate, terms) => stringify(predicate) + "(" + stringify(terms) + ")"
     }
 
@@ -30,11 +34,50 @@ object FofsequaToFof {
         case Exists() => "?"
     }
 
-    def stringify(arguments: QuantifierArguments): String = arguments match {
-        case BasicQuantifierArguments(variables) => variables.map((variable: Variable) => stringify(variable)).mkString(" ")
-        case ConstantSetQuantifierArguments(variable, constant_set) => {throw new Error("not implemented")}
+    def stringify(statement : QuantifiedStatement, is_upper_level: Boolean): String = statement match {
+        case QuantifiedStatement(quantifier, arguments, statement) =>
+        {
+            arguments match {
+                case BasicQuantifierArguments(variables) => quantified_statement(
+                    quantifier,
+                    variables.map((variable: Variable) => stringify(variable)).mkString(" "),
+                    statement
+                )
+
+                case ConstantSetQuantifierArguments(variable, constant_set) => {
+                    constant_set match {
+                        case BasicConstantSet(constants) => {
+                            val connector = " " + (quantifier match {
+                                case ForAll() => stringify(And())
+                                case Exists() => stringify(Or())
+                            }) + " "
+
+                            // TODO: for each constant, create a statement which is equal to `statement` with `variable` replaced by the constant
+                            // then concat these together with `connector` in between them
+                            throw new Error("quantifying over constant sets isn't supported yet")
+                        }
+                        // throw new Error("can't directly stringify BasicConstantSet, only through stringify(QuantifiedStatement)")
+                        case PatternVar(name) => {
+                            if(is_upper_level) {
+                                quantified_statement(
+                                    quantifier,
+                                    stringify(name).capitalize,
+                                    statement
+                                )
+                            }
+                            else {
+                                throw new Error("statements quantifying over a pattern variable can only be the first thing in a statement")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
+    def quantified_statement(quantifier: Quantifier, arguments: String, statement: Statement) = {
+        stringify(quantifier) + "[" + arguments +  "]: " + stringify(statement)
+    }
     def stringify(constant_set: ConstantSet): String = throw new Exception("not implemented") // todo
 
     def stringify(variable: Variable): String = stringify(variable.id).capitalize
