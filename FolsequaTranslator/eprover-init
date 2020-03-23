@@ -1,3 +1,5 @@
+#!/bin/bash
+
 mkdir 'eprover-executable'
 curl http://wwwlehre.dhbw-stuttgart.de/~sschulz/WORK/E_DOWNLOAD/V_2.3/E.tgz | tar -xz -C './eprover-executable' --strip-components=1
 
