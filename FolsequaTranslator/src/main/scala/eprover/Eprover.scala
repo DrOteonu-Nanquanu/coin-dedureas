@@ -1,13 +1,13 @@
 package eprover
-import sys.process._
-import java.io._
 
+import java.io.{File, PrintWriter}
+import sys.process._
 
 object Eprover {
   val PATH_TO_EPROVER: String = "./eprover-executable/PROVER/eprover"
 
   def evaluate_TPTP(tptp: String) : String = {
-    val file_name = "/tmp/evaluation.tptp"
+    val file_name = "/tmp/evaluate.tptp"
 
     val file = new File(file_name)
     val writer = new PrintWriter(file)
@@ -15,7 +15,6 @@ object Eprover {
     writer.close
 
     val result = execute(file_name)
-
 
     file.delete
 
