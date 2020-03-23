@@ -7,6 +7,8 @@ object Eprover {
   val PATH_TO_EPROVER: String = "./eprover-executable/PROVER/eprover"
 
   def evaluate_TPTP(tptp: String) : String = {
+    print(tptp)
+
     val file_name = "/tmp/evaluate.tptp"
 
     val file = new File(file_name)

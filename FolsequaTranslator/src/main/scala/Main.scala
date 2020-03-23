@@ -1,6 +1,9 @@
 import parser._
 import eprover._
+
+import scala.util.Success
 import sys.process._
+import scala.util.parsing.combinator._
 
 object Main {
   def main(args: Array[String]): Unit = {
@@ -11,23 +14,64 @@ object Main {
     // println(FofsequaToFof.stringify())
   }
 
+  def evaluate_fofsequa(knowledge_base: String, goal: String): Option[String] = {
+    val parsed_knowledge_base = FolseqParser.parse(FolseqParser.fofsequa_document, knowledge_base) match {
+      case FolseqParser.Success(result, next) => result
+      case _ => {
+        println("parsing knowledge base not succesfull")
+        return None
+      }
+    }
+
+    val parsed_goal = FolseqParser.parse(FolseqParser.statement, goal) match {
+      case FolseqParser.Success(result, next) => result
+      case _ => {
+        println("parsing goal not succesful")
+        return None
+      }
+    }
+
+    // TODO: turn eprover's answer into a statement into the answer lang
+    Some(Eprover.evaluate_TPTP(FofsequaToFof.to_tptp(parsed_knowledge_base, parsed_goal)))
+  }
+
   def test(): Unit = {
     println()
     test_parse()
+    println()
 
     println()
     test_stringify()
+    println()
 
     println()
     test_translate()
     println()
+
+    println()
+    test_prove()
+    println()
+
+    println()
+    test_fofsequa()
+    println()
+  }
+
+  def test_fofsequa() = {
+    evaluate_fofsequa("""P('x')""", """![x from s_]: P(x)""") match {
+      case Some(output) => println(output)
+      case None => println("something went wrong")
+    }
   }
 
   def test_prove() = {
     // val result = Eprover.execute("/home/jcmaas/Documents/coin-dedureas/example_db.tptp")
     // println(result)
 
-    println(Eprover.evaluate_TPTP("""fof(goal, conjecture, livesIn("Marit", "Norway"))."""))
+    println(Eprover.evaluate_TPTP(
+      """
+        |fof(axiom, axiom, livesIn("Marit", "Norway")).
+        |fof(goal, question, ?[X]: livesIn(X, "Norway")).""".stripMargin))
   }
 
   def test_parse() = {

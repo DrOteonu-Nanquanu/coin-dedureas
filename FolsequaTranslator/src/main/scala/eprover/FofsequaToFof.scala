@@ -4,9 +4,13 @@ package eprover
 import parser._
 
 object FofsequaToFof {
-    def stringify (document: List[Statement]) : String =
+    def to_tptp(knowledge_base: Seq[Statement], goal: Statement) : String =
+        stringify(knowledge_base) +
+          "fof(goal, question," + stringify(goal, true) + ")."
+
+    def stringify (document: Seq[Statement]) : String =
         document.foldLeft("")((accumulator, statement) =>
-            "fof(numberFacts, axiom," + accumulator + stringify(statement, true) + ").\n"
+            "fof(knowledge_base, axiom," + accumulator + stringify(statement) + ").\n"
         )
 
     def stringify(statement: Statement, is_upper_level: Boolean = false) : String = statement match {
@@ -54,19 +58,22 @@ object FofsequaToFof {
 
                             // TODO: for each constant, create a statement which is equal to `statement` with `variable` replaced by the constant
                             // then concat these together with `connector` in between them
-                            throw new Error("quantifying over constant sets isn't supported yet")
+                            throw new Error("Quantifying over constant sets isn't supported yet")
                         }
                         // throw new Error("can't directly stringify BasicConstantSet, only through stringify(QuantifiedStatement)")
                         case PatternVar(name) => {
                             if(is_upper_level) {
                                 quantified_statement(
-                                    quantifier,
-                                    stringify(name).capitalize,
+                                    quantifier match {
+                                        case ForAll() => Exists()
+                                        case Exists() => throw new Error("Existential quantifiers aren't supported when quantifying over pattern variables. Use the existential quantifier \"!\" instead.")
+                                    },
+                                    stringify(variable).capitalize,
                                     statement
                                 )
                             }
                             else {
-                                throw new Error("statements quantifying over a pattern variable can only be the first thing in a statement")
+                                throw new Error("Statements quantifying over a pattern variable can only be the first thing in a statement")
                             }
                         }
                     }

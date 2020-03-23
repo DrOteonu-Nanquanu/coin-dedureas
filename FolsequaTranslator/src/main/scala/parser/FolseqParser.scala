@@ -69,9 +69,15 @@ case class UnaryConnectiveStatement(connective: UnaryConnective, post_statement:
 case class QuantifiedStatement(quantifier: Quantifier, arguments: QuantifierArguments, statement: Statement) extends Statement
 case class AtomStatement(predicate: FolPredicate, terms: Array[FolTerm]) extends Statement
 
-sealed abstract class Quantifier
-case class ForAll() extends Quantifier
-case class Exists() extends Quantifier
+sealed abstract class Quantifier {
+  def inverse(): Quantifier
+}
+case class ForAll() extends Quantifier {
+  override def inverse(): Quantifier = Exists()
+}
+case class Exists() extends Quantifier {
+  override def inverse(): Quantifier = ForAll()
+}
 
 sealed abstract class QuantifierArguments
 case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments
