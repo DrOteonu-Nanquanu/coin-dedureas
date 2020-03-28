@@ -10,8 +10,6 @@ object Main {
     println("Hello World")
 
     test()
-
-    // println(FofsequaToFof.stringify())
   }
 
   def evaluate_fofsequa(knowledge_base: String, goal: String): Option[String] = {
@@ -31,8 +29,11 @@ object Main {
       }
     }
 
+    val eprover_answer = Eprover.evaluate_TPTP(FofsequaToFof.to_tptp(parsed_knowledge_base, parsed_goal))
+    val answer_variables = Eprover.get_answer_tuples(eprover_answer)
+
     // TODO: turn eprover's answer into a statement into the answer lang
-    Some(Eprover.evaluate_TPTP(FofsequaToFof.to_tptp(parsed_knowledge_base, parsed_goal)))
+    Some(eprover_answer)
   }
 
   def test(): Unit = {
@@ -40,6 +41,7 @@ object Main {
     test_parse()
     println()
 
+    /*
     println()
     test_stringify()
     println()
@@ -54,7 +56,7 @@ object Main {
 
     println()
     test_fofsequa()
-    println()
+    println()*/
   }
 
   def test_fofsequa() = {
@@ -84,7 +86,10 @@ object Main {
     )
 
     for(test <- tests) {
-      println(FolseqParser.parse(FolseqParser.fofsequa_document, test))
+      val parsed = FolseqParser.parse(FolseqParser.fofsequa_document, test)
+      println(parsed.get)
+      println(test)
+      println(parsed.get.map(_.toString))
     }
 
     println(FolseqParser.parse(FolseqParser.variableList, "a,b"))

@@ -62,26 +62,43 @@ object TPTPElement {
 
   def fromAny(element: Any): TPTPElement = new TPTPElement(element.toString, false)
 }
-    
+
 sealed abstract class Statement
-case class BinaryConnectiveStatement(pre_statement: Statement, connective: BinaryConnective, post_statement: Statement) extends Statement
-case class UnaryConnectiveStatement(connective: UnaryConnective, post_statement: Statement) extends Statement
-case class QuantifiedStatement(quantifier: Quantifier, arguments: QuantifierArguments, statement: Statement) extends Statement
-case class AtomStatement(predicate: FolPredicate, terms: Array[FolTerm]) extends Statement
+case class BinaryConnectiveStatement(pre_statement: Statement, connective: BinaryConnective, post_statement: Statement) extends Statement {
+  override def toString: String = pre_statement.toString + connective.toString + post_statement.toString
+}
+case class UnaryConnectiveStatement(connective: UnaryConnective, post_statement: Statement) extends Statement {
+  override def toString: String = connective.toString + post_statement.toString
+}
+case class QuantifiedStatement(quantifier: Quantifier, arguments: QuantifierArguments, statement: Statement) extends Statement{
+  override def toString: String = quantifier.toString + "[" + arguments.toString + "]:" + statement.toString
+}
+
+case class AtomStatement(predicate: FolPredicate, terms: Array[FolTerm]) extends Statement{
+  override def toString: String = predicate.toString + terms.map(_.toString).mkString("(", ",", ")")
+}
 
 sealed abstract class Quantifier {
   def inverse(): Quantifier
 }
 case class ForAll() extends Quantifier {
+  override def toString: String = "!"
+
   override def inverse(): Quantifier = Exists()
 }
 case class Exists() extends Quantifier {
+  override def toString: String = "?"
+
   override def inverse(): Quantifier = ForAll()
 }
 
 sealed abstract class QuantifierArguments
-case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments
-case class BasicQuantifierArguments(variables: List[Variable]) extends QuantifierArguments
+case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments {
+  override def toString: String = variable.toString + " from " + constant_set.toString
+}
+case class BasicQuantifierArguments(variables: List[Variable]) extends QuantifierArguments {
+  override def toString: String = variables.map(_.toString).mkString(",")
+}
 
 sealed abstract class ConstantSet
 case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet
