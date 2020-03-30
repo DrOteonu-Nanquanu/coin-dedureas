@@ -30,10 +30,21 @@ object Main {
     }
 
     val eprover_answer = Eprover.evaluate_TPTP(FofsequaToFof.to_tptp(parsed_knowledge_base, parsed_goal))
-    val answer_variables = Eprover.get_answer_tuples(eprover_answer)
+    val answer_constants = Eprover.get_answer_tuples(eprover_answer).map(answer => Constant(LowercaseID(answer))).toArray
 
     // TODO: turn eprover's answer into a statement into the answer lang
-    Some(eprover_answer)
+    val substituted = parsed_goal match {
+      case QuantifiedStatement(quantifier, arguments, statement) => arguments match {
+        case ConstantSetQuantifierArguments(variable, constant_set) => constant_set match {
+          case PatternVar(name) => QuantifiedStatement(quantifier, ConstantSetQuantifierArguments(variable, BasicConstantSet(answer_constants)), statement)
+          case _ => None
+        }
+        case _ => None
+      }
+      case _ => None
+    }
+
+    Some(substituted.toString)
   }
 
   def test(): Unit = {
@@ -41,7 +52,7 @@ object Main {
     test_parse()
     println()
 
-    /*
+
     println()
     test_stringify()
     println()
@@ -56,7 +67,7 @@ object Main {
 
     println()
     test_fofsequa()
-    println()*/
+    println()
   }
 
   def test_fofsequa() = {

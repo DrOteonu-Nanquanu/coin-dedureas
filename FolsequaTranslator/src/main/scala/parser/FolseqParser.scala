@@ -109,7 +109,7 @@ case class PatternVar(name: LowercaseID) extends ConstantSet {
 }
 
 case class Constant(id: LowercaseID)  {
-  override def toString: String = id.toString
+  override def toString: String = "'" + id.toString + "'"
 }
 case class Variable(id: LowercaseID) {
   override def toString: String = id.toString
