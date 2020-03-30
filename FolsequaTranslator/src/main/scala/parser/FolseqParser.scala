@@ -101,28 +101,60 @@ case class BasicQuantifierArguments(variables: List[Variable]) extends Quantifie
 }
 
 sealed abstract class ConstantSet
-case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet
-case class PatternVar(name: LowercaseID) extends ConstantSet
+case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet {
+  override def toString: String = constants.map(_.toString).mkString("{", ",", "}")
+}
+case class PatternVar(name: LowercaseID) extends ConstantSet {
+  override def toString: String = name.toString
+}
 
-case class Constant(id: LowercaseID)
-case class Variable(id: LowercaseID)
-case class LowercaseID(name: String)
-case class UppercaseID(name: String)
+case class Constant(id: LowercaseID)  {
+  override def toString: String = id.toString
+}
+case class Variable(id: LowercaseID) {
+  override def toString: String = id.toString
+}
+case class LowercaseID(name: String) {
+  override def toString: String = name.toString
+}
+case class UppercaseID(name: String) {
+  override def toString: String = name.toString
+}
 
 sealed abstract class UnaryConnective
-case class Not() extends UnaryConnective
+case class Not() extends UnaryConnective {
+  override def toString: String = "not"
+}
 
 sealed abstract class BinaryConnective
-case class And() extends BinaryConnective
-case class Or() extends BinaryConnective
-case class IfThen() extends BinaryConnective
-case class Iff() extends BinaryConnective
+case class And() extends BinaryConnective {
+  override def toString: String = "&"
+}
+case class Or() extends BinaryConnective {
+  override def toString: String = "|"
+}
+case class IfThen() extends BinaryConnective {
+  override def toString: String = "=>"
+}
+case class Iff() extends BinaryConnective {
+  override def toString: String = "<=>"
+}
 
-case class FolPredicate(name: UppercaseID)
+case class FolPredicate(name: UppercaseID) {
+  override def toString: String = name.toString
+}
 
 sealed abstract class FolTerm()
-case class FunctionApplication(function: FolFunction, terms: Array[FolTerm]) extends FolTerm
-case class ConstantTerm(constant: Constant) extends FolTerm
-case class VariableTerm(variable: Variable) extends FolTerm
+case class FunctionApplication(function: FolFunction, terms: Array[FolTerm]) extends FolTerm {
+  override def toString: String = function.toString + "(" + terms.toString + ")"
+}
+case class ConstantTerm(constant: Constant) extends FolTerm {
+  override def toString: String = constant.toString
+}
+case class VariableTerm(variable: Variable) extends FolTerm {
+  override def toString: String = variable.toString
+}
 
-case class FolFunction(name: LowercaseID)
+case class FolFunction(name: LowercaseID) {
+  override def toString: String = name.toString
+}
