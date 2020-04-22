@@ -3,39 +3,81 @@ package parser
 import scala.util.parsing.combinator._
 
 object FolseqParser extends RegexParsers {
-  def lowercaseID = "[a-z][a-zA-Z]*".r ^^ { new LowercaseID(_) }
-  def uppercaseID = "[A-Z][a-zA-Z]*".r ^^ { new UppercaseID(_) }
-  def folPredicate = uppercaseID ^^ { new FolPredicate(_) }
-  def variable = lowercaseID ^^ { new Variable(_) }
-  def constant = "\'" ~ lowercaseID ~ "\'" ^^ { case _ ~ name ~ _ => new Constant(name) }
+  // TODO: Numbers aren't supported yet
 
-  def folFunction = lowercaseID ^^ { new FolFunction(_) }
-  def folTermList : Parser[Array[FolTerm]] = folTerm ~ ", *".r ~ folTermList ^^ { case term ~ _ ~ termList => Array(term) ++ termList } | folTerm ^^ { Array(_) }
-  def folTerm = folFunction ~ "(" ~ folTermList ~ ")" ^^ { case function ~ _ ~ termList ~ _  => new FunctionApplication(function, termList) } | constant ^^ { new ConstantTerm(_) } | variable ^^ { new VariableTerm(_) }
-
-  def folAtom : Parser[AtomStatement] = folPredicate ~ "(" ~ folTermList ~ ")" ^^ { case predicate ~ _ ~ termList ~ _ => new AtomStatement(predicate, termList) }
-  def unaryConnective = "not" ^^ { (x) => new Not() }
-  def binaryConnective : Parser[BinaryConnective] = "and"  ^^ { (x) => new And() } | "or" ^^ { (x) => new Or() } | "=>"  ^^ { (x) => new IfThen()} | "<=>" ^^ { (x) => new Iff() }
-
-  def statement : Parser[Statement] = unaryConnective ~ statement ^^ { case connective ~ stmt => new UnaryConnectiveStatement(connective, stmt) } |
-    "(" ~ statement ~ binaryConnective ~ statement ~ ")" ^^ { case _ ~ statement1 ~ connective ~ statement2 ~ _ => new BinaryConnectiveStatement(statement1, connective, statement2) } |
-    quantifiedFormula | folAtom
-  //currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
-  def quantifiedFormula = quantifier ~ "[" ~ quantifierArguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => new QuantifiedStatement(quant, quantArguments, stmt) }
-  def quantifier = "!" ^^ {(x) => new ForAll()} | "?" ^^ {(x) => new Exists()}
-  def quantifierArguments = variable ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => new ConstantSetQuantifierArguments(v, constant_set)} | 
-    variableList ^^ { new BasicQuantifierArguments(_) }
-  /*def variableList: Parser[Array[Variable]] = variable ^^ { Array(_) } |
-    variable ~ "," ~ variableList ^^ { case v ~ _ ~ v_list => Array(v) ++ v_list }*/
-  def variableList: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
-  def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => new BasicConstantSet(elements)} | patternVar
-  def patternVar =  lowercaseID ~ "_" ^^ { case id ~ _ => new PatternVar(id) }
-  def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => Array(const) ++ constSetElements }
-
-//  def fofsequa_document: Parser[Array[Statement]] = statement ^^ { Array(_) } | statement ~ "\n" ~ fofsequa_document ^^ {case stmt ~ _ ~ doc => Array(stmt) ++ doc }
+  // <fofsequa_document> ::= <fofsequa_statement>+
   def fofsequa_document: Parser[List[Statement]] = statement ~ ((";" ~ statement) ^^ {case _ ~ stmt => stmt}).* ^^ {
     case first_statement ~ statement_list => first_statement :: statement_list
   }
+
+  // TODO: Currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
+  //<fofsequa_statement> ::= <unary_connective> <fofsequa_statement> | (<fofsequa_statement> <binary connective> <fofsequa_statement) | <quantified_formula> | <fol_atom>
+  def statement : Parser[Statement] =
+    unary_connective ~ statement ^^ { case connective ~ stmt => UnaryConnectiveStatement(connective, stmt) } |
+    "(" ~ statement ~ binary_connective ~ statement ~ ")" ^^ { case _ ~ statement1 ~ connective ~ statement2 ~ _ => BinaryConnectiveStatement(statement1, connective, statement2) } |
+    quantified_formula |
+    fol_atom
+
+  // <unary_connective> ::= not
+  def unary_connective = "not" ^^ { (x) => Not() }
+
+  // <binary_connective> ::= and | or | => | <=>
+  def binary_connective : Parser[BinaryConnective] = "and"  ^^ { (x) => And() } |
+    "or" ^^ { (x) => Or() } |
+    "=>"  ^^ { (x) => IfThen()} |
+    "<=>" ^^ { (x) => Iff() }
+
+  // <fol_atom> ::= <fol_predicate>(<fol_term_list>) | <fol_term> = <fol_term>
+  def fol_atom : Parser[AtomStatement] = fol_predicate ~ "(" ~ fol_term_list ~ ")" ^^ { case predicate ~ _ ~ termList ~ _ => AtomStatement(predicate, termList) }
+
+  // <fol_predicate> ::= <uppercase_id> | <predifined_predicate>
+  def fol_predicate = uppercase_ID ^^ { FolPredicate(_) }
+
+  // sequence of alphabetical characters, starting with upper case
+  def uppercase_ID = "[A-Z][a-zA-Z]*".r ^^ { UppercaseID(_) }
+
+  // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
+  def fol_term_list : Parser[Array[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => Array(term) ++ termList } | fol_term ^^ { Array(_) }
+
+  // <fol_term> ::= <var> | <constant> | <fol_function>(<fol_term_list>)
+  def fol_term =
+    variable ^^ { VariableTerm(_) } |
+    constant ^^ { ConstantTerm(_) } |
+    fol_function ~ "(" ~ fol_term_list ~ ")" ^^ { case function ~ _ ~ termList ~ _  => FunctionApplication(function, termList) }
+
+  // <var> ::= <lowercase_id>
+  def variable = lowercase_ID ^^ { Variable(_) }
+
+  // sequence of alphabetical characters, starting with lower case
+  def lowercase_ID = "[a-z][a-zA-Z]*".r ^^ { LowercaseID(_) }
+
+  // <constant> ::= '<lowercase_id>' | <decimal_integer>
+  def constant = "\'" ~ lowercase_ID ~ "\'" ^^ { case _ ~ name ~ _ => Constant(name) }
+
+  // <fol_function> ::= <lowercase_id>
+  def fol_function = lowercase_ID ^^ { FolFunction(_) }
+
+  // <quantified_formula> ::= <quantifier>[<quantifier_arguments>]: <fofsequa_statement>
+  def quantified_formula = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
+
+  // <quantifier> ::= ! | ?
+  def quantifier = "!" ^^ {(x) => ForAll()} | "?" ^^ {x => Exists()}
+
+  // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
+  def quantifier_arguments = variable ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => ConstantSetQuantifierArguments(v, constant_set)} |
+    variable_list ^^ { BasicQuantifierArguments(_) }
+
+  // <fol_variable_list> ::= <var> | <fol_variable_list>, <fol_variable_list>
+  def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
+
+  // <constant_set> ::= {<constant_set_elements>} | <pattern_var>
+  def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
+
+  // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
+  def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => Array(const) ++ constSetElements }
+
+  // <pattern_var> ::= <lowercase_id>_
+  def patternVar =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
 }
 
 case class TPTPElement(content: String, isConjecture: Boolean = false) {
