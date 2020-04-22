@@ -48,8 +48,10 @@ object Main {
   }
 
   def test(): Unit = {
+    var successful = true;
+
     println()
-    test_parse()
+    successful &&= test_parse()
     println()
 
 
@@ -58,7 +60,7 @@ object Main {
     println()
 
     println()
-    test_translate()
+    successful &&= test_translate()
     println()
 
     println()
@@ -66,14 +68,16 @@ object Main {
     println()
 
     println()
-    test_fofsequa()
+    successful &&= test_fofsequa()
     println()
+
+    println("successful: " ++ successful.toString)
   }
 
-  def test_fofsequa() = {
+  def test_fofsequa(): Boolean = {
     evaluate_fofsequa("""P('x')""", """![x from s_]: P(x)""") match {
-      case Some(output) => println(output)
-      case None => println("something went wrong")
+      case Some(output) => { println(output); true }
+      case None => {println("something went wrong"); false}
     }
   }
 
@@ -87,8 +91,10 @@ object Main {
         |fof(goal, question, ?[X]: livesIn(X, "Norway")).""".stripMargin))
   }
 
-  def test_parse() = {
+  def test_parse(): Boolean = {
     println("test parse")
+
+    var success = true
 
     val tests = Array(
       """P('a')""",
@@ -98,18 +104,40 @@ object Main {
 
     for(test <- tests) {
       val parsed = FolseqParser.parse(FolseqParser.fofsequa_document, test)
-      println(parsed.get)
-      println(test)
-      println(parsed.get.map(_.toString))
+
+      if (parsed.successful) {
+        println(parsed.get)
+        println(test)
+        println(parsed.get.map(_.toString))
+      }
+      else {
+        success = false
+      }
     }
 
-    println(FolseqParser.parse(FolseqParser.variableList, "a,b"))
-    println(FolseqParser.parse(FolseqParser.quantifierArguments, "a,b"))
-    println(FolseqParser.parse(FolseqParser.quantifiedFormula, "![a,b]: P(a, b)"))
-    println(FolseqParser.parse(FolseqParser.quantifiedFormula, "![a]: P(a, b)"))
+    val tests_2 = List(
+      (FolseqParser.variable_list, "a,b"),
+      (FolseqParser.quantifier_arguments, "a,b"),
+      (FolseqParser.quantified_formula, "![a,b]: P(a, b)"),
+      (FolseqParser.quantified_formula, "![a]: P(a, b)")
+    )
+
+    for((parser, statement) <- tests_2) {
+      val parsed = FolseqParser.parse(parser, statement)
+
+      if (parsed.successful) {
+        println(parsed.get)
+        println(statement)
+      }
+      else {
+        success = false
+      }
+    }
 
     // println(FolseqParser.parse(FolseqParser.fofsequa_document, """P("a") and P("b")"""))
     // println(FolseqParser.parse(FolseqParser.quantifiedFormula, """![a from p_]: P(a, "b")"""))
+
+    success
   }
 
   def test_stringify() = {
@@ -117,7 +145,7 @@ object Main {
     println(FofsequaToFof.stringify(AtomStatement(FolPredicate(UppercaseID("P")), Array())))
   }
 
-  def test_translate() = {
+  def test_translate(): Boolean = {
     println("test translate")
 
     val tests = Array(
@@ -128,6 +156,8 @@ object Main {
       """P('x');
         |R('y')""".stripMargin,
     )
+
+    var success = true
 
     for(test_fofsequa_string <- tests) {
       val parsed = FolseqParser.parseAll(FolseqParser.fofsequa_document, test_fofsequa_string)
@@ -140,7 +170,10 @@ object Main {
       else {
         println("Parse error in:" + test_fofsequa_string)
         println(parsed)
+        success = false
       }
     }
+
+    success
   }
 }
