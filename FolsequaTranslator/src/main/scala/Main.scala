@@ -1,9 +1,9 @@
-import parser._
 import eprover._
 
 import scala.util.Success
 import sys.process._
 import scala.util.parsing.combinator._
+import fofsequa._
 
 object Main {
   def main(args: Array[String]): Unit = {
