@@ -1,7 +1,7 @@
 package eprover
 
 // import jdk.jshell.spi.ExecutionControl.NotImplementedException
-import parser._
+import org.nanquanu.fofsequa._
 
 object FofsequaToFof {
     def to_tptp(knowledge_base: Seq[Statement], goal: Statement) : String =
