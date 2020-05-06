@@ -1,4 +1,4 @@
-package fofsequa
+package org.nanquanu.fofsequa
 
 import scala.util.parsing.combinator._
 
