@@ -1,4 +1,4 @@
-name := "folsequa-tptp-parser"
+name := "fofsequa-eprover-reasoner"
 
 version := "0.1"
 
