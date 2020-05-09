@@ -7,14 +7,22 @@ object Main {
   def main(args: Array[String]): Unit = {
     println("Hello World")
 
-    Test.test
+    for(arg <- args) {
+      println(arg)
+    }
+
+    evaluate_file("./test_fofsequa_kb.txt", read_input_query)
   }
 
-  def read_input = {
+  def read_input_query: String = {
     var query = StringBuilder.newBuilder
-    while(query.length > 0 && query.charAt(query.length - 1) != ".") {
+    do {
       query.append(StdIn.readLine())
     }
+    while(query.charAt(query.length - 1) != ';')
+
+    query.deleteCharAt(query.length - 1)
+
     query.toString
   }
 
