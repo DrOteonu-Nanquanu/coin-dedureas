@@ -10,7 +10,7 @@ object FofsequaToFof {
 
     def stringify (document: Seq[Statement]) : String =
         document.foldLeft("")((accumulator, statement) =>
-            "fof(knowledge_base, axiom," + accumulator + stringify(statement) + ").\n"
+            accumulator + "fof(knowledge_base, axiom," + stringify(statement) + ").\n"
         )
 
     def stringify(statement: Statement, is_upper_level: Boolean = false) : String = statement match {
