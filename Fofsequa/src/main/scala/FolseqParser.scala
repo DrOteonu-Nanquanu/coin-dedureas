@@ -37,7 +37,7 @@ object FolseqParser extends RegexParsers {
   def uppercase_ID = "[A-Z][a-zA-Z]*".r ^^ { UppercaseID(_) }
 
   // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
-  def fol_term_list : Parser[Array[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => Array(term) ++ termList } | fol_term ^^ { Array(_) }
+  def fol_term_list : Parser[List[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => List(term) ++ termList } | fol_term ^^ { List(_) }
 
   // <fol_term> ::= <var> | <constant> | <fol_function>(<fol_term_list>)
   def fol_term =
@@ -74,7 +74,7 @@ object FolseqParser extends RegexParsers {
   def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
 
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
-  def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => Array(const) ++ constSetElements }
+  def constantSetElements: Parser[List[Constant]] = constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
 
   // <pattern_var> ::= <lowercase_id>_
   def patternVar =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
@@ -116,7 +116,7 @@ case class QuantifiedStatement(quantifier: Quantifier, arguments: QuantifierArgu
   override def toString: String = quantifier.toString + "[" + arguments.toString + "]:" + statement.toString
 }
 
-case class AtomStatement(predicate: FolPredicate, terms: Array[FolTerm]) extends Statement{
+case class AtomStatement(predicate: FolPredicate, terms: Seq[FolTerm]) extends Statement{
   override def toString: String = predicate.toString + terms.map(_.toString).mkString("(", ",", ")")
 }
 
@@ -135,14 +135,15 @@ case class Exists() extends Quantifier {
 }
 
 sealed abstract class QuantifierArguments
-case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments {
-  override def toString: String = (if(variables.length == 0) variables.head.toString else variables.mkString("(", ",", ")")) + " from " + constant_set.toString
-case class BasicQuantifierArguments(variables: List[Variable]) extends QuantifierArguments {
+case class ConstantSetQuantifierArguments(variables: Seq[Variable], constant_set: ConstantSet) extends QuantifierArguments {
+  override def toString: String = (if(variables.length == 0) variables.head.toString else {}) + " from " + constant_set.toString
+}
+case class BasicQuantifierArguments(variables: Seq[Variable]) extends QuantifierArguments {
   override def toString: String = variables.map(_.toString).mkString(",")
 }
 
 sealed abstract class ConstantSet
-case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet {
+case class BasicConstantSet(constants: Seq[Constant]) extends ConstantSet {
   override def toString: String = constants.map(_.toString).mkString("{", ",", "}")
 }
 case class PatternVar(name: LowercaseID) extends ConstantSet {
@@ -186,8 +187,8 @@ case class FolPredicate(name: UppercaseID) {
 }
 
 sealed abstract class FolTerm()
-case class FunctionApplication(function: FolFunction, terms: Array[FolTerm]) extends FolTerm {
-  override def toString: String = function.toString + "(" + terms.toString + ")"
+case class FunctionApplication(function: FolFunction, terms: Seq[FolTerm]) extends FolTerm {
+  override def toString: String = function.toString + terms.mkString("(", ",", ")")
 }
 case class ConstantTerm(constant: Constant) extends FolTerm {
   override def toString: String = constant.toString

@@ -142,7 +142,7 @@ object Main {
 
   def test_stringify() = {
     println("test stringify")
-    println(FofsequaToFof.stringify(AtomStatement(FolPredicate(UppercaseID("P")), Array())))
+    println(FofsequaToFof.stringify(AtomStatement(FolPredicate(UppercaseID("P")), List[FolTerm]())))
   }
 
   def test_translate(): Boolean = {
