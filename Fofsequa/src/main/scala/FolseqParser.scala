@@ -64,7 +64,7 @@ object FolseqParser extends RegexParsers {
   def quantifier = "!" ^^ {(x) => ForAll()} | "?" ^^ {x => Exists()}
 
   // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
-  def quantifier_arguments = variable ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => ConstantSetQuantifierArguments(v, constant_set)} |
+  def quantifier_arguments = variable_list ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => ConstantSetQuantifierArguments(v, constant_set)} |
     variable_list ^^ { BasicQuantifierArguments(_) }
 
   // <fol_variable_list> ::= <var> | <fol_variable_list>, <fol_variable_list>
@@ -136,8 +136,7 @@ case class Exists() extends Quantifier {
 
 sealed abstract class QuantifierArguments
 case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments {
-  override def toString: String = variable.toString + " from " + constant_set.toString
-}
+  override def toString: String = (if(variables.length == 0) variables.head.toString else variables.mkString("(", ",", ")")) + " from " + constant_set.toString
 case class BasicQuantifierArguments(variables: List[Variable]) extends QuantifierArguments {
   override def toString: String = variables.map(_.toString).mkString(",")
 }
