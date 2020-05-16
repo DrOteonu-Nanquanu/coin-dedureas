@@ -2,6 +2,9 @@ package org.nanquanu.fofsequa
 
 import scala.util.parsing.combinator._
 
+/*
+ Parser
+*/
 object FolseqParser extends RegexParsers {
   // TODO: Numbers aren't supported yet
 
@@ -74,36 +77,18 @@ object FolseqParser extends RegexParsers {
   def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
 
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
-  def constantSetElements: Parser[List[Constant]] = constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
+  def constantSetElements = constant_tuple.* // constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
+
+  // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)*">"
+  def constant_tuple = constant ^^ {const => ConstantTuple(List(const))} | ("<" ~ constant ~ ("," ~ constant ^^ {case _ ~ const => const}).* ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
 
   // <pattern_var> ::= <lowercase_id>_
   def patternVar =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
 }
 
-case class TPTPElement(content: String, isConjecture: Boolean = false) {
-  def toFOF =
-    if(isConjecture) {
-      "fof(conj, conjecture, " + content + ")"
-    } else {
-      "fof(stmt, axiom, " + content + ")"
-    }
-}
-
-object TPTPElement {
-  def combine(elements: Array[Any]): TPTPElement = {
-    elements.foldLeft(new TPTPElement("", false))((result: TPTPElement, item: Any) =>
-      if(item.isInstanceOf[TPTPElement]) {
-        val itemCast = item.asInstanceOf[TPTPElement]
-        new TPTPElement(result.content + itemCast.content, result.isConjecture || itemCast.isConjecture)
-      }
-      else {
-        new TPTPElement(result.content + item.toString, result.isConjecture)
-      }
-    )
-  }
-
-  def fromAny(element: Any): TPTPElement = new TPTPElement(element.toString, false)
-}
+/*
+  Data structures
+*/
 
 sealed abstract class Statement
 case class BinaryConnectiveStatement(pre_statement: Statement, connective: BinaryConnective, post_statement: Statement) extends Statement {
@@ -136,18 +121,30 @@ case class Exists() extends Quantifier {
 
 sealed abstract class QuantifierArguments
 case class ConstantSetQuantifierArguments(variables: Seq[Variable], constant_set: ConstantSet) extends QuantifierArguments {
-  override def toString: String = (if(variables.length == 0) variables.head.toString else {}) + " from " + constant_set.toString
+  override def toString: String = (
+      if(variables.length == 1) variables.head.toString
+      else variables.mkString(",")
+    ) + " from " + constant_set.toString
 }
 case class BasicQuantifierArguments(variables: Seq[Variable]) extends QuantifierArguments {
   override def toString: String = variables.map(_.toString).mkString(",")
 }
 
 sealed abstract class ConstantSet
-case class BasicConstantSet(constants: Seq[Constant]) extends ConstantSet {
+case class BasicConstantSet(constants: Seq[ConstantTuple]) extends ConstantSet {
   override def toString: String = constants.map(_.toString).mkString("{", ",", "}")
 }
 case class PatternVar(name: LowercaseID) extends ConstantSet {
-  override def toString: String = name.toString
+  override def toString: String = name.toString + "_"
+}
+
+case class ConstantTuple(constants: Seq[Constant]) {
+  override def toString(): String = if(constants.length == 1) {
+    constants.head.toString()
+  }
+  else {
+    constants.map(_.toString).mkString("<", ",", ">")
+  }
 }
 
 case class Constant(id: LowercaseID)  {

@@ -11,7 +11,8 @@ object Main {
       println(arg)
     }
 
-    evaluate_file("./test_fofsequa_kb.txt", read_input_query)
+    // evaluate_file("./test_fofsequa_kb.txt", read_input_query)
+    Test.test()
   }
 
   def read_input_query: String = {
@@ -82,13 +83,24 @@ object Main {
 
     val eprover_answer = Eprover.evaluate_TPTP(FofsequaToFof.to_tptp(parsed_knowledge_base, parsed_goal))
     println(eprover_answer)
-    val answer_constants = Eprover.get_answer_tuples(eprover_answer).map(answer => Constant(LowercaseID(answer))).toArray
-
-    // TODO: turn eprover's answer into a statement into the answer lang
+    // TODO: support constant tuples
+    val answer_constants = Eprover.get_answer_tuples(eprover_answer).map(answers => {
+      val answers_as_constants = answers.map(
+        constant_name => Constant(LowercaseID(constant_name.toLowerCase()))
+      )
+      ConstantTuple(answers_as_constants)
+    })
+    println("parsed goal:")
+    println(parsed_goal)
+    println("-------")
+    // turn eprover's answer into a statement into the answer lang
     val substituted = parsed_goal match {
       case QuantifiedStatement(quantifier, arguments, statement) => arguments match {
-        case ConstantSetQuantifierArguments(variable, constant_set) => constant_set match {
-          case PatternVar(name) => QuantifiedStatement(quantifier, ConstantSetQuantifierArguments(variable, BasicConstantSet(answer_constants)), statement)
+        case ConstantSetQuantifierArguments(variables, constant_set) => constant_set match {
+          case PatternVar(name) => {
+            println("variables_length = " + variables.length)
+            QuantifiedStatement(quantifier, ConstantSetQuantifierArguments(variables, BasicConstantSet(answer_constants)), statement)
+          }
           case _ => None
         }
         case _ => None
