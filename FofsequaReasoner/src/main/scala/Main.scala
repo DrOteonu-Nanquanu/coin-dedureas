@@ -5,8 +5,11 @@ import scala.io.{Source, StdIn}
 
 object Main {
   def main(args: Array[String]): Unit = {
-    println("Hello World")
+    Test.test()
+    // console_interface(args)
+  }
 
+  def console_interface(args: Array[String]): Unit = {
     for(arg <- args) {
       println(arg)
     }

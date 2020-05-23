@@ -9,15 +9,24 @@ object Test {
 
     println()
     successful &&= test_parse()
+    if(!successful) {
+      println("error test_parse")
+    }
     println()
 
 
     println()
     test_stringify()
+    if(!successful) {
+      println("error test_stringify")
+    }
     println()
 
     println()
     successful &&= test_translate()
+    if(!successful) {
+      println("error test_translate")
+    }
     println()
 
     println()
@@ -26,17 +35,24 @@ object Test {
 
     println()
     successful &&= test_fofsequa()
+    if(!successful) {
+      println("error test_fofsequa")
+    }
     println()
 
     println()
     successful &&= test_file
+    if(!successful) {
+      println("error test_file")
+    }
     println()
 
     println("successful: " ++ successful.toString)
   }
 
   def test_file: Boolean = {
-    Main.evaluate_file("./test_fofsequa_kb.txt", "![x from s_]: Q(x)")
+    Main.evaluate_file("./test_fofsequa_kb.txt", "![x from s_]: Q(x)") &&
+    Main.evaluate_file("./test_fofsequa_kb2.txt", "![(x, y) from s_]: R(x, y)")
   }
 
   def test_fofsequa(): Boolean = {
