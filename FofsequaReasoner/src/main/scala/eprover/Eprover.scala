@@ -33,7 +33,8 @@ object Eprover {
 
       if(start == answer_start) {
         val (quoted_variables, tail) = end.splitAt(end.indexOf(']'))
-        val variable_names = quoted_variables.split(",").map(
+        val variable_names = quoted_variables.filter(_ != ' ')
+          .split(",").map(
           quoted_variable => quoted_variable.slice(1, quoted_variable.length - 1)
         )
 

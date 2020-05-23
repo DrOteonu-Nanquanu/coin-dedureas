@@ -154,10 +154,10 @@ case class Variable(id: LowercaseID) {
   override def toString: String = id.toString
 }
 case class LowercaseID(name: String) {
-  override def toString: String = name.toString
+  override def toString: String = name
 }
 case class UppercaseID(name: String) {
-  override def toString: String = name.toString
+  override def toString: String = name
 }
 
 sealed abstract class UnaryConnective

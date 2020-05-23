@@ -52,7 +52,8 @@ object Test {
 
   def test_file: Boolean = {
     Main.evaluate_file("./test_fofsequa_kb.txt", "![x from s_]: Q(x)") &&
-    Main.evaluate_file("./test_fofsequa_kb2.txt", "![(x, y) from s_]: R(x, y)")
+    Main.evaluate_file("./test_fofsequa_kb2.txt", "![x, y from s_]: R(x, y)") &&
+    Main.evaluate_file("./test_fofsequa_kb2.txt", "![x, y, z from s_]: T(x, y, z)")
   }
 
   def test_fofsequa(): Boolean = {
