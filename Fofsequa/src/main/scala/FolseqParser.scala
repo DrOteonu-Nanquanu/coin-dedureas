@@ -2,6 +2,9 @@ package org.nanquanu.fofsequa
 
 import scala.util.parsing.combinator._
 
+/*
+ Parser
+*/
 object FolseqParser extends RegexParsers {
   // TODO: Numbers aren't supported yet
 
@@ -37,7 +40,7 @@ object FolseqParser extends RegexParsers {
   def uppercase_ID = "[A-Z][a-zA-Z]*".r ^^ { UppercaseID(_) }
 
   // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
-  def fol_term_list : Parser[Array[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => Array(term) ++ termList } | fol_term ^^ { Array(_) }
+  def fol_term_list : Parser[List[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => List(term) ++ termList } | fol_term ^^ { List(_) }
 
   // <fol_term> ::= <var> | <constant> | <fol_function>(<fol_term_list>)
   def fol_term =
@@ -64,7 +67,7 @@ object FolseqParser extends RegexParsers {
   def quantifier = "!" ^^ {(x) => ForAll()} | "?" ^^ {x => Exists()}
 
   // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
-  def quantifier_arguments = variable ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => ConstantSetQuantifierArguments(v, constant_set)} |
+  def quantifier_arguments = variable_list ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => ConstantSetQuantifierArguments(v, constant_set)} |
     variable_list ^^ { BasicQuantifierArguments(_) }
 
   // <fol_variable_list> ::= <var> | <fol_variable_list>, <fol_variable_list>
@@ -74,36 +77,18 @@ object FolseqParser extends RegexParsers {
   def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
 
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
-  def constantSetElements: Parser[Array[Constant]] = constant ^^ { Array(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => Array(const) ++ constSetElements }
+  def constantSetElements = constant_tuple.* // constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
+
+  // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)*">"
+  def constant_tuple = constant ^^ {const => ConstantTuple(List(const))} | ("<" ~ constant ~ ("," ~ constant ^^ {case _ ~ const => const}).* ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
 
   // <pattern_var> ::= <lowercase_id>_
   def patternVar =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
 }
 
-case class TPTPElement(content: String, isConjecture: Boolean = false) {
-  def toFOF =
-    if(isConjecture) {
-      "fof(conj, conjecture, " + content + ")"
-    } else {
-      "fof(stmt, axiom, " + content + ")"
-    }
-}
-
-object TPTPElement {
-  def combine(elements: Array[Any]): TPTPElement = {
-    elements.foldLeft(new TPTPElement("", false))((result: TPTPElement, item: Any) =>
-      if(item.isInstanceOf[TPTPElement]) {
-        val itemCast = item.asInstanceOf[TPTPElement]
-        new TPTPElement(result.content + itemCast.content, result.isConjecture || itemCast.isConjecture)
-      }
-      else {
-        new TPTPElement(result.content + item.toString, result.isConjecture)
-      }
-    )
-  }
-
-  def fromAny(element: Any): TPTPElement = new TPTPElement(element.toString, false)
-}
+/*
+  Data structures
+*/
 
 sealed abstract class Statement
 case class BinaryConnectiveStatement(pre_statement: Statement, connective: BinaryConnective, post_statement: Statement) extends Statement {
@@ -116,7 +101,7 @@ case class QuantifiedStatement(quantifier: Quantifier, arguments: QuantifierArgu
   override def toString: String = quantifier.toString + "[" + arguments.toString + "]:" + statement.toString
 }
 
-case class AtomStatement(predicate: FolPredicate, terms: Array[FolTerm]) extends Statement{
+case class AtomStatement(predicate: FolPredicate, terms: Seq[FolTerm]) extends Statement{
   override def toString: String = predicate.toString + terms.map(_.toString).mkString("(", ",", ")")
 }
 
@@ -135,19 +120,31 @@ case class Exists() extends Quantifier {
 }
 
 sealed abstract class QuantifierArguments
-case class ConstantSetQuantifierArguments(variable: Variable, constant_set: ConstantSet) extends QuantifierArguments {
-  override def toString: String = variable.toString + " from " + constant_set.toString
+case class ConstantSetQuantifierArguments(variables: Seq[Variable], constant_set: ConstantSet) extends QuantifierArguments {
+  override def toString: String = (
+      if(variables.length == 1) variables.head.toString
+      else variables.mkString(",")
+    ) + " from " + constant_set.toString
 }
-case class BasicQuantifierArguments(variables: List[Variable]) extends QuantifierArguments {
+case class BasicQuantifierArguments(variables: Seq[Variable]) extends QuantifierArguments {
   override def toString: String = variables.map(_.toString).mkString(",")
 }
 
 sealed abstract class ConstantSet
-case class BasicConstantSet(constants: Array[Constant]) extends ConstantSet {
+case class BasicConstantSet(constants: Seq[ConstantTuple]) extends ConstantSet {
   override def toString: String = constants.map(_.toString).mkString("{", ",", "}")
 }
 case class PatternVar(name: LowercaseID) extends ConstantSet {
-  override def toString: String = name.toString
+  override def toString: String = name.toString + "_"
+}
+
+case class ConstantTuple(constants: Seq[Constant]) {
+  override def toString(): String = if(constants.length == 1) {
+    constants.head.toString()
+  }
+  else {
+    constants.map(_.toString).mkString("<", ",", ">")
+  }
 }
 
 case class Constant(id: LowercaseID)  {
@@ -187,8 +184,8 @@ case class FolPredicate(name: UppercaseID) {
 }
 
 sealed abstract class FolTerm()
-case class FunctionApplication(function: FolFunction, terms: Array[FolTerm]) extends FolTerm {
-  override def toString: String = function.toString + "(" + terms.toString + ")"
+case class FunctionApplication(function: FolFunction, terms: Seq[FolTerm]) extends FolTerm {
+  override def toString: String = function.toString + terms.mkString("(", ",", ")")
 }
 case class ConstantTerm(constant: Constant) extends FolTerm {
   override def toString: String = constant.toString

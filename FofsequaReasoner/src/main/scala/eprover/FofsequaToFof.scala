@@ -21,7 +21,7 @@ object FofsequaToFof {
             stringify(QuantifiedStatement(quantifier, arguments, statement), is_upper_level)
         }
 
-        case AtomStatement(predicate, terms) => stringify(predicate) + "(" + stringify(terms) + ")"
+        case AtomStatement(predicate, terms) => stringify(predicate) + "(" + stringify_term_list(terms) + ")"
     }
 
     def stringify(connective: BinaryConnective) : String = connective match {
@@ -44,11 +44,11 @@ object FofsequaToFof {
             arguments match {
                 case BasicQuantifierArguments(variables) => quantified_statement(
                     quantifier,
-                    variables.map((variable: Variable) => stringify(variable)).mkString(" "),
+                    variables.map((variable: Variable) => stringify(variable)).mkString(", "),
                     statement
                 )
 
-                case ConstantSetQuantifierArguments(variable, constant_set) => {
+                case ConstantSetQuantifierArguments(variable_list, constant_set) => {
                     constant_set match {
                         case BasicConstantSet(constants) => {
                             val connector = " " + (quantifier match {
@@ -68,7 +68,7 @@ object FofsequaToFof {
                                         case ForAll() => Exists()
                                         case Exists() => throw new Error("Existential quantifiers aren't supported when quantifying over pattern variables. Use the existential quantifier \"!\" instead.")
                                     },
-                                    stringify(variable).capitalize,
+                                    stringify_variable_list(variable_list),
                                     statement
                                 )
                             }
@@ -89,19 +89,21 @@ object FofsequaToFof {
 
     def stringify(variable: Variable): String = stringify(variable.id).capitalize
 
+    def stringify_variable_list(variable_list: Seq[Variable]): String = variable_list.map(stringify).mkString(",")
+
     def stringify(id: LowercaseID): String = id.name
 
     def stringify(predicate: FolPredicate): String = stringify(predicate.name)
 
     def stringify(uppercase_ID: UppercaseID): String = uppercase_ID.name
 
-    def stringify(terms: Array[FolTerm]) : String = terms.map(
+    def stringify_term_list(terms: Seq[FolTerm]) : String = terms.map(
         term => stringify(term)
     ).mkString(", ")
 
     def stringify(term: FolTerm): String = term match {
         case ConstantTerm(constant) => stringify(constant)
-        case FunctionApplication(function, terms) => stringify(function) + "(" + stringify(terms) + ")"
+        case FunctionApplication(function, terms) => stringify(function) + "(" + stringify_term_list(terms) + ")"
         case VariableTerm(variable) => stringify(variable)
     }
 

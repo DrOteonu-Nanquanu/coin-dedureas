@@ -25,20 +25,23 @@ object Eprover {
 
   def execute(file_name: String) : String = ((PATH_TO_EPROVER + eprover_options + file_name) lineStream_!).mkString("\n")
 
-  def get_answer_tuples(eprover_answer: String): List[String] = {
-    val answer_start = "# SZS answers Tuple [['"
+  def get_answer_tuples(eprover_answer: String): List[List[String]] = {
+    val answer_start = "# SZS answers Tuple [["
 
     eprover_answer.split("\n").toList.flatMap(line => {
       val (start, end) = line.splitAt(answer_start.length)
 
       if(start == answer_start) {
-        val (var_name, tail) = end.splitAt(end.indexOf('\''))
+        val (quoted_variables, tail) = end.splitAt(end.indexOf(']'))
+        val variable_names = quoted_variables.split(",").map(
+          quoted_variable => quoted_variable.slice(1, quoted_variable.length - 1)
+        )
 
-        if(tail != "']|_]"){
+        if(tail != "]|_]"){
           throw new Error("unexpected tail: " + tail)
         }
 
-        List(var_name)
+        List(variable_names.toList)
       }
       else {
         List()
