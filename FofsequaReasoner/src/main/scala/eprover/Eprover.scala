@@ -1,4 +1,4 @@
-package eprover
+package fofsequa_reasoner.eprover
 
 import java.io.{File, PrintWriter}
 import sys.process._

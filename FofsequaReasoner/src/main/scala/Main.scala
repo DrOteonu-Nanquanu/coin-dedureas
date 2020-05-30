@@ -1,3 +1,4 @@
+package fofsequa_reasoner
 import eprover._
 import org.nanquanu.fofsequa._
 
@@ -5,7 +6,7 @@ import scala.io.{Source, StdIn}
 
 object Main {
   def main(args: Array[String]): Unit = {
-    Test.test()
+    test.Test.test()
     // console_interface(args)
   }
 
@@ -15,7 +16,7 @@ object Main {
     }
 
     // evaluate_file("./test_fofsequa_kb.txt", read_input_query)
-    Test.test()
+    test.Test.test()
   }
 
   def read_input_query: String = {
