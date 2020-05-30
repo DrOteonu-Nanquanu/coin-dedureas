@@ -1,4 +1,4 @@
-package fofsequa_reasoner
+package org.nanquanu.fofsequa_reasoner
 import eprover._
 import org.nanquanu.fofsequa._
 

@@ -1,4 +1,4 @@
-package fofsequa_reasoner.eprover
+package org.nanquanu.fofsequa_reasoner.eprover
 
 // import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import org.nanquanu.fofsequa._
