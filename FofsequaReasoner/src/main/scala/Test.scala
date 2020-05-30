@@ -1,6 +1,6 @@
 package org.nanquanu.fofsequa_reasoner.test
 import org.nanquanu.fofsequa_reasoner._
-import org.nanquanu.fofsequa_reasoner.Main.evaluate_fofsequa
+import org.nanquanu.fofsequa_reasoner.Main.evaluate_fofsequa_to_string
 import eprover.{Eprover, FofsequaToFof}
 import org.nanquanu.fofsequa.{AtomStatement, FolPredicate, FolseqParser, UppercaseID}
 
@@ -59,7 +59,7 @@ object Test {
   }
 
   def test_fofsequa(): Boolean = {
-    evaluate_fofsequa("""P('x')""", """![x from s_]: P(x)""") match {
+    evaluate_fofsequa_to_string("""P('x')""", """![x from s_]: P(x)""") match {
       case Some(output) => { println(output); true }
       case None => {println("something went wrong"); false}
     }

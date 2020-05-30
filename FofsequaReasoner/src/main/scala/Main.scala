@@ -35,7 +35,7 @@ object Main {
     val file = Source.fromFile(file_path)
     val lines = try file.getLines() mkString "\n" finally file.close()
 
-    evaluate_fofsequa(lines, query) match {
+    evaluate_fofsequa_to_string(lines, query) match {
       case Some(answer) => {
         println(answer)
         true
@@ -44,7 +44,7 @@ object Main {
     }
   }
 
-  def evaluate_fofsequa(knowledge_base: String, goal: String): Option[String] = {
+  def evaluate_fofsequa(knowledge_base: String, goal: String): Option[Statement] = {
     val parsed_knowledge_base = FolseqParser.parseAll(FolseqParser.fofsequa_document, knowledge_base) match {
       case FolseqParser.Success(result, next) => result
       case FolseqParser.Error(message, next) => {
@@ -105,13 +105,15 @@ object Main {
             println("variables_length = " + variables.length)
             QuantifiedStatement(quantifier, ConstantSetQuantifierArguments(variables, BasicConstantSet(answer_constants)), statement)
           }
-          case _ => None
+          case _ => return None
         }
-        case _ => None
+        case _ => return None
       }
-      case _ => None
+      case _ => return None
     }
 
-    Some(substituted.toString)
+    Some(substituted)
   }
+
+  def evaluate_fofsequa_to_string(knowledge_base: String, goal: String): Option[String] = evaluate_fofsequa(knowledge_base, goal).map(_.toString())
 }
