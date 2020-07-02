@@ -37,13 +37,16 @@ object FolseqParser extends RegexParsers {
   def fol_predicate = uppercase_ID ^^ { FolPredicate(_) }
 
   // sequence of alphabetical characters, starting with upper case
-  def uppercase_ID = "[A-Z]([a-zA-Z]|_)*".r ^^ { UppercaseID(_) }
+  def uppercase_ID = "[A-Z](([A-Za-z]|_)*[A-Za-z])?".r /*("[A-Z]" + identifier_base_regex).r*/  ^^ { UppercaseID(_) }
+
+  // sequence of characters and underscores that doesn't end in an underscore
+  def identifier_base_regex = "(([A-z]|_)*[A-z])?"//.r ^^ {s: String => s}  // for some reason `{_: String}` doesn't work
 
   // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
   def fol_term_list : Parser[List[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => List(term) ++ termList } | fol_term ^^ { List(_) }
 
   // <fol_term> ::= <var> | <constant> | <fol_function>(<fol_term_list>)
-  def fol_term =
+  def fol_term: Parser[FolTerm] =
     variable ^^ { VariableTerm(_) } |
     constant ^^ { ConstantTerm(_) } |
     fol_function ~ "(" ~ fol_term_list ~ ")" ^^ { case function ~ _ ~ termList ~ _  => FunctionApplication(function, termList) }
@@ -52,7 +55,7 @@ object FolseqParser extends RegexParsers {
   def variable = lowercase_ID ^^ { Variable(_) }
 
   // sequence of alphabetical characters, starting with lower case
-  def lowercase_ID = "[a-z]([a-zA-Z]|_)*".r ^^ { LowercaseID(_) }
+  def lowercase_ID = "[a-z](([A-Za-z]|_)*[A-Za-z])?".r /*("[a-z]" + identifier_base_regex).r*/ ^^ { LowercaseID(_) }
 
   // <constant> ::= '<lowercase_id>' | <decimal_integer>
   def constant = "\'" ~ lowercase_ID ~ "\'" ^^ { case _ ~ name ~ _ => Constant(name) }
@@ -64,20 +67,20 @@ object FolseqParser extends RegexParsers {
   def quantified_formula = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
 
   // <quantifier> ::= ! | ?
-  def quantifier = "!" ^^ {(x) => ForAll()} | "?" ^^ {x => Exists()}
+  def quantifier: Parser[Quantifier] = "!" ^^ {x => ForAll()} | "?" ^^ {x => Exists()}
 
   // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
-  def quantifier_arguments = variable_list ~ "from" ~ constantSet ^^ {case v ~ _ ~ constant_set => ConstantSetQuantifierArguments(v, constant_set)} |
+  def quantifier_arguments = variable_list ~ "from" ~ constant_set ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
     variable_list ^^ { BasicQuantifierArguments(_) }
 
   // <fol_variable_list> ::= <var> | <fol_variable_list>, <fol_variable_list>
   def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
 
   // <constant_set> ::= {<constant_set_elements>} | <pattern_var>
-  def constantSet = "{" ~ constantSetElements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
+  def constant_set = "{" ~ constant_set_elements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
 
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
-  def constantSetElements = constant_tuple.* // constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
+  def constant_set_elements = constant_tuple ~ ("," ~ constant_tuple ^^ {case _comma ~ tuple => tuple}).* ^^ {case c ~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
 
   // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)*">"
   def constant_tuple = constant ^^ {const => ConstantTuple(List(const))} | ("<" ~ constant ~ ("," ~ constant ^^ {case _ ~ const => const}).* ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }

@@ -21,9 +21,5 @@ class TestBase extends AnyFlatSpec {
         }
       })
     }
-
-    assert(Main.evaluate_file("test_fofsequa_kb.txt", "![x from s_]: Q(x)").isSuccess)
-    assert(Main.evaluate_file("test_fofsequa_kb2.txt", "![x, y from s_]: R(x, y)").isSuccess)
-    assert(Main.evaluate_file("test_fofsequa_kb2.txt", "![x, y, z from s_]: T(x, y, z)").isSuccess)
   }
 }

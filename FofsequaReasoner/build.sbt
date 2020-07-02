@@ -1,4 +1,4 @@
-name := "fofsequa-eprover-reasoner"
+name := "test"
 
 ThisBuild / organization := "org.nanquanu"
 ThisBuild / version := "0.2-SNAPSHOT"
