@@ -37,7 +37,7 @@ object FolseqParser extends RegexParsers {
   def fol_predicate = uppercase_ID ^^ { FolPredicate(_) }
 
   // sequence of alphabetical characters, starting with upper case
-  def uppercase_ID = "[A-Z][a-zA-Z]*".r ^^ { UppercaseID(_) }
+  def uppercase_ID = "[A-Z]([a-zA-Z]|_)*".r ^^ { UppercaseID(_) }
 
   // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
   def fol_term_list : Parser[List[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => List(term) ++ termList } | fol_term ^^ { List(_) }
@@ -52,7 +52,7 @@ object FolseqParser extends RegexParsers {
   def variable = lowercase_ID ^^ { Variable(_) }
 
   // sequence of alphabetical characters, starting with lower case
-  def lowercase_ID = "[a-z][a-zA-Z]*".r ^^ { LowercaseID(_) }
+  def lowercase_ID = "[a-z]([a-zA-Z]|_)*".r ^^ { LowercaseID(_) }
 
   // <constant> ::= '<lowercase_id>' | <decimal_integer>
   def constant = "\'" ~ lowercase_ID ~ "\'" ^^ { case _ ~ name ~ _ => Constant(name) }
