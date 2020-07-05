@@ -2,34 +2,60 @@ package org.nanquanu.fofsequa_reasoner
 import eprover._
 import org.nanquanu.fofsequa
 import org.nanquanu.fofsequa._
-import org.nanquanu.fofsequa_reasoner.errors.{Format_exception, Kb_parse_exception, Query_parse_exception, Reasoning_exception, Reasoning_parse_exception}
+import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, Kb_parse_exception, Query_parse_exception, Reasoning_exception, Reasoning_parse_exception}
 
 import scala.io.{Source, StdIn}
 import scala.util.{Failure, Success, Try}
 
 object Main {
   def main(args: Array[String]): Unit = {
-    test.Test.test()
-    // console_interface(args)
+    // test.Test.test()
+    console_interface(args)
   }
 
   def console_interface(args: Array[String]): Unit = {
-    for(arg <- args) {
-      println(arg)
+    var maybe_kb: Option[String] = None
+    var maybe_query: Option[String] = None
+
+    for(i <- 0 to args.length - 1) {
+      lazy val next =  args(i + 1)
+
+      args(i) match {
+        case "--kb" | "-k" => maybe_kb = Some(next)
+        case "--query" | "-q" => maybe_query = Some(next)
+        case _ => ()
+      }
     }
 
-    // evaluate_file("./test_fofsequa_kb.txt", read_input_query)
-    test.Test.test()
+    val answer = maybe_kb match {
+      case Some(kb) => {
+         maybe_query match {
+           case Some(query) => {
+             evaluate_file(kb, query)
+           }
+           case None => evaluate_file(kb, read_input_statements)
+         }
+      }
+      case None => {
+        maybe_query match {
+          case Some(query) => evaluate_fofsequa(read_input_statements, query)
+          case None => Failure(Cli_exception("Supply at least one of the following: a knowledge base through '--kb <file_name>' or a query through '--query <pattern_statement>'"))
+        }
+      }
+    }
+
+    answer match {
+      case Success(statement) => println(statement.toString)
+      case Failure(exception) => throw exception
+    }
   }
 
-  def read_input_query: String = {
+  def read_input_statements: String = {
     var query = StringBuilder.newBuilder
     do {
       query.append(StdIn.readLine())
     }
-    while(query.charAt(query.length - 1) != ';')
-
-    query.deleteCharAt(query.length - 1)
+    while(query.charAt(query.length - 1) == ';')
 
     query.toString
   }
