@@ -4,7 +4,7 @@ import scala.util.{Failure, Success}
 // import org.scalatest.funsuite.AnyFunSuite
 import org.nanquanu.fofsequa_reasoner.Main
 
-class TestBase extends AnyFlatSpec {
+class Test_base extends AnyFlatSpec {
   "Complete test on test files" should "succeed" in {
     for((file, query) <- List (
       ("test_fofsequa_kb.txt", "![x from s_]: Q(x)"),
