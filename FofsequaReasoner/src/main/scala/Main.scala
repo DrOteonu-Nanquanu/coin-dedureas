@@ -61,7 +61,12 @@ object Main {
   }
 
   def evaluate_file(file_path: String, query: String): Try[String] = {
-    val file = Source.fromFile(file_path)
+    val file = try {
+      Source.fromFile(file_path)
+    } catch {
+      case error: Throwable => return Failure(error)
+    }
+
     val lines = try file.getLines() mkString "\n" finally file.close()
 
     evaluate_fofsequa_to_string(lines, query)
