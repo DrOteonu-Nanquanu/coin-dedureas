@@ -6,6 +6,12 @@ import org.nanquanu.fofsequa.{AtomStatement, FolPredicate, FolseqParser, Upperca
 
 import scala.util.{Failure, Success}
 
+/*
+  This is the old test code. It is currently unused, since we're using ScalaTest now.
+  The new tests are located in src/test/scala/
+  Some of these might be converted to ScalaTest tests in the future.
+ */
+
 object Test {
 
   def test(): Unit = {

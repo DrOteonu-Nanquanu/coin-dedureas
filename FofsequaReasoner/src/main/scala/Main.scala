@@ -9,16 +9,17 @@ import scala.util.{Failure, Success, Try}
 
 object Main {
   def main(args: Array[String]): Unit = {
-    // test.Test.test()
     console_interface(args)
   }
 
+  // Reads a KB and query from the commandline arguments and STDIN, evaluates them, and outputs the result
   def console_interface(args: Array[String]): Unit = {
     var maybe_kb: Option[String] = None
     var maybe_query: Option[String] = None
 
+    // Read commandline argumetns
     for(i <- 0 to args.length - 1) {
-      lazy val next =  args(i + 1)
+      lazy val next = args(i + 1)
 
       args(i) match {
         case "--kb" | "-k" => maybe_kb = Some(next)
@@ -31,25 +32,28 @@ object Main {
       case Some(kb) => {
          maybe_query match {
            case Some(query) => {
-             evaluate_file(kb, query)
+             evaluate_file(kb, query) // Evaluate with a knowledge base in a file given through the commandline arguments and query query through commandline arguments as well
            }
-           case None => evaluate_file(kb, read_input_statements)
+           case None => evaluate_file(kb, read_input_statements) // Evaluate with a knowledge base in a file given through the commandline arguments and the query through STDIN
          }
       }
       case None => {
         maybe_query match {
-          case Some(query) => evaluate_fofsequa(read_input_statements, query)
-          case None => Failure(Cli_exception("Supply at least one of the following: a knowledge base through '--kb <file_name>' or a query through '--query <pattern_statement>'"))
+          case Some(query) => evaluate_fofsequa(read_input_statements, query) // Evaluate with a knowledge base given through STDIN and the query through the commandline arguments
+          case None => // No query and no knowledge base. We can only read one from STDIN so that's a problem.
+            Failure(Cli_exception("Supply at least one of the following: a knowledge base through '--kb <file_name>' or a query through '--query <pattern_statement>'"))
         }
       }
     }
 
+    // Output result or error
     answer match {
       case Success(statement) => println(statement.toString)
       case Failure(exception) => throw exception
     }
   }
 
+  // Read statements from STDIN
   def read_input_statements: String = {
     var query = StringBuilder.newBuilder
     do {
@@ -60,6 +64,7 @@ object Main {
     query.toString
   }
 
+  // Evaluate `query` on the knowledge base in the file named `file_path`
   def evaluate_file(file_path: String, query: String): Try[String] = {
     val file = try {
       Source.fromFile(file_path)
@@ -89,25 +94,24 @@ object Main {
       case error: FolseqParser.NoSuccess => return Failure(Query_parse_exception(error))
     }
 
-    // TODO: support constant tuples
+    // Get the set of tuples that should be substitute the pattern variable
     val answer_constants = evaluate_to_answer_tuples(knowledge_base, parsed_goal) match {
       case error: Failure[List[List[String]]] => return Failure(error.exception)
-      case Success(answer_tuples) => answer_tuples.map (answers => {
-        val answers_as_constants = answers.map (
-        constant_name => Constant (LowercaseID (constant_name.toLowerCase () ) )
+
+      case Success(answer_tuples) => answer_tuples.map (list_of_constant_names => {
+        // Convert list of constant names to constant tuple
+        val answers_as_constants = list_of_constant_names.map (
+          constant_name => Constant (LowercaseID (constant_name.toLowerCase () ) )
         )
         ConstantTuple (answers_as_constants)
       })
     }
-    println("parsed goal:")
-    println(parsed_goal)
-    println("-------")
-    // turn eprover's answer into a statement into the answer lang
+
+    // Substitute the pattern variable for the calculated set of answer tuples
     val substituted = parsed_goal match {
       case QuantifiedStatement(quantifier, arguments, statement) => arguments match {
         case ConstantSetQuantifierArguments(variables, constant_set) => constant_set match {
-          case PatternVar(name) => {
-            println("variables_length = " + variables.length)
+          case PatternVar(_name) => {
             QuantifiedStatement(quantifier, ConstantSetQuantifierArguments(variables, BasicConstantSet(answer_constants)), statement)
           }
           case _ => return Failure(Format_exception("No pattern variable found in query statement"))
