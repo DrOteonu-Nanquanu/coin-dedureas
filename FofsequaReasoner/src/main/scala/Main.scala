@@ -7,7 +7,7 @@ import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, K
 import scala.io.{Source, StdIn}
 import scala.util.{Failure, Success, Try}
 
-object Main {
+object FofsequaReasoner {
   def main(args: Array[String]): Unit = {
     console_interface(args)
   }

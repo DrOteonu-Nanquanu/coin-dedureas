@@ -1,6 +1,6 @@
 package org.nanquanu.fofsequa_reasoner.test
 import org.nanquanu.fofsequa_reasoner._
-import org.nanquanu.fofsequa_reasoner.Main.evaluate_fofsequa_to_string
+import org.nanquanu.fofsequa_reasoner.FofsequaReasoner.evaluate_fofsequa_to_string
 import eprover.{Eprover, FofsequaToFof}
 import org.nanquanu.fofsequa.{AtomStatement, FolPredicate, FolseqParser, UppercaseID}
 

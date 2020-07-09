@@ -2,7 +2,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.util.{Failure, Success}
 // import org.scalatest.funsuite.AnyFunSuite
-import org.nanquanu.fofsequa_reasoner.Main
+import org.nanquanu.fofsequa_reasoner.FofsequaReasoner
 
 class Test_base extends AnyFlatSpec {
   "Complete test on test files" should "succeed" in {
@@ -11,7 +11,7 @@ class Test_base extends AnyFlatSpec {
       ("test_fofsequa_kb2.txt", "![x, y from s_]: R(x, y)"),
       ("test_fofsequa_kb2.txt", "![x, y, z from s_]: T(x, y, z)"),
     )) {
-      assert(Main.evaluate_file(file, query) match {
+      assert(FofsequaReasoner.evaluate_file(file, query) match {
         case Success(value) => true
         case Failure(exception) => {
           println("error in file '" ++ file + "' with file query '" ++ query ++ "'")
