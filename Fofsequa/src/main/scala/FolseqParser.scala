@@ -1,11 +1,23 @@
 package org.nanquanu.fofsequa
 
+import java.text.ParseException
+
 import scala.util.parsing.combinator._
 
 /*
  Parser
 */
 object FolseqParser extends RegexParsers {
+  def parse_or_throw[R](string_to_parse: String, parser: Parser[R]): R = {
+    this.parseAll(parser, string_to_parse) match {
+      case FolseqParser.Success(result, next) => result
+      case error: FolseqParser.NoSuccess => throw errors.Parse_exception(error)
+    }
+  }
+
+  val parse_statement_or_throw = parse_or_throw(_: String, statement)
+  val parse_document_or_throw = parse_or_throw(_: String, fofsequa_document)
+
   // TODO: Numbers aren't supported yet
 
   // <fofsequa_document> ::= <fofsequa_statement>+
