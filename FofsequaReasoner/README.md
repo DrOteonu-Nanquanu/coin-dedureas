@@ -18,6 +18,8 @@ You can install E with the provided script on a Unix-like (Linux/MacOS) OS. It i
 
 Run the script by `cd`ing into the directory where this README is located, and then either mark it executable (`chmod u+x ./eprover-init`) and run `./eprover-init`, or use the command `bash ./eprover-init`.
 
+Make sure to add the newly created directory `eprover-executable/PROVER` to your `$PATH`.
+
 ### Publishing Fofsequa library
 First build and publish (locally) the Fofsequa library. `cd` into the Fofsequa repository in the same repository as this project. Then execute `sbt publishLocal`.
 

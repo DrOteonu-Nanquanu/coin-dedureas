@@ -1,3 +1,4 @@
+import org.nanquanu.fofsequa_reasoner.eprover.Eprover
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.util.{Failure, Success}
@@ -5,6 +6,8 @@ import scala.util.{Failure, Success}
 import org.nanquanu.fofsequa_reasoner.FofsequaReasoner
 
 class Test_base extends AnyFlatSpec {
+  // Eprover.PATH_TO_EPROVER = Some("./eprover-executable/PROVER/eprover")
+
   "Complete test on test files" should "succeed" in {
     for((file, query) <- List (
       ("test_fofsequa_kb.txt", "![x from s_]: Q(x)"),

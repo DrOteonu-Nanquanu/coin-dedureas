@@ -1,10 +1,23 @@
 package org.nanquanu.fofsequa_reasoner.eprover
 
 import java.io.{File, PrintWriter}
+
+import scala.io.{Source, StdIn}
 import sys.process._
 
 object Eprover {
-  val PATH_TO_EPROVER: String = "./eprover-executable/PROVER/eprover"
+  var PATH_TO_EPROVER: Option[String] = Some("eprover")
+    //(Eprover.getClass.getProtectionDomain.getCodeSource.getLocation + "../../../eprover-executable/PROVER/eprover").substring(5)
+    //"./eprover-executable/PROVER/eprover"
+
+  def path_to_eprover() = PATH_TO_EPROVER match {
+    case Some(path) => path
+    case None => {
+      val path = StdIn.readLine();
+      PATH_TO_EPROVER = Some(path)
+      path
+    }
+  }
 
   // Evaluate Eprover on the given tptp string
   def evaluate_TPTP(tptp: String) : String = {
@@ -28,7 +41,7 @@ object Eprover {
   val eprover_arguments = " --auto -s --answers "
 
   // Execute Eprover on a file
-  def execute(file_name: String) : String = ((PATH_TO_EPROVER + eprover_arguments + file_name) lineStream_!).mkString("\n")
+  def execute(file_name: String) : String = ((path_to_eprover() + eprover_arguments + file_name) lineStream_!).mkString("\n")
 
   // Extract the answer tuples from Eprover's answer
   def get_answer_tuples(eprover_answer: String): List[List[String]] = {
