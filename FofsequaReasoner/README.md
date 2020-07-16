@@ -24,4 +24,4 @@ Make sure to add the newly created directory `eprover-executable/PROVER` to your
 First build and publish (locally) the Fofsequa library. `cd` into the Fofsequa repository in the same repository as this project. Then execute `sbt publishLocal`.
 
 ### Running the program
-`cd` into the directory where this README is located, and run `sbt run`
+`cd` into the directory where this README is located, and run `sbt run`. Or run `sbt test` to verify the project is installed correctly.
