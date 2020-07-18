@@ -4,6 +4,7 @@ import java.io.{File, PrintWriter}
 
 import scala.io.{Source, StdIn}
 import sys.process._
+import scala.language.postfixOps
 
 object Eprover {
   var PATH_TO_EPROVER: Option[String] = Some("eprover")

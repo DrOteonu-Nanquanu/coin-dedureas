@@ -2,9 +2,10 @@ package org.nanquanu.fofsequa_reasoner.test
 import org.nanquanu.fofsequa_reasoner._
 import org.nanquanu.fofsequa_reasoner.FofsequaReasoner.evaluate_fofsequa_to_string
 import eprover.{Eprover, FofsequaToFof}
-import org.nanquanu.fofsequa.{AtomStatement, FolPredicate, FolseqParser, UppercaseID}
+import org.nanquanu.fofsequa.{AtomStatement, Constant, FolPredicate, FolseqParser, UppercaseID, Variable}
 
 import scala.util.{Failure, Success}
+import scala.collection.immutable
 
 /*
   This is the old test code. It is currently unused, since we're using ScalaTest now.
@@ -136,7 +137,7 @@ object Test {
 
   def test_stringify() = {
     println("test stringify")
-    println(FofsequaToFof.stringify(AtomStatement(FolPredicate(UppercaseID("P")), List())))
+    println(FofsequaToFof.stringify(immutable.HashMap.empty[Variable, Constant], AtomStatement(FolPredicate(UppercaseID("P")), List()), false))
   }
 
   def test_translate(): Boolean = {
@@ -159,7 +160,7 @@ object Test {
       if (parsed.successful) {
         println("Parsed correctly: " + test_fofsequa_string)
         println(parsed.get)
-        println(FofsequaToFof.stringify(parsed.get))
+        println(FofsequaToFof.stringify_document(parsed.get))
       }
       else {
         println("Parse error in:" + test_fofsequa_string)

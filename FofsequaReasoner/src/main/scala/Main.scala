@@ -4,11 +4,14 @@ import org.nanquanu.fofsequa
 import org.nanquanu.fofsequa._
 import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, Kb_parse_exception, Query_parse_exception, Reasoning_exception, Reasoning_parse_exception}
 
+import scala.collection.immutable.HashMap
 import scala.io.{Source, StdIn}
 import scala.util.{Failure, Success, Try}
 
 object FofsequaReasoner {
   def main(args: Array[String]): Unit = {
+    val hm: HashMap[String, String] = HashMap.empty
+
     console_interface(args)
   }
 
