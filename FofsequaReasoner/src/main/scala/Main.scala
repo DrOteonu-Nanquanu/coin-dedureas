@@ -10,13 +10,13 @@ import scala.util.{Failure, Success, Try}
 
 object FofsequaReasoner {
   def main(args: Array[String]): Unit = {
-    val hm: HashMap[String, String] = HashMap.empty
-
     console_interface(args)
   }
 
   // Reads a KB and query from the commandline arguments and STDIN, evaluates them, and outputs the result
   def console_interface(args: Array[String]): Unit = {
+    Eprover.locate_eprover_executable()
+
     var maybe_kb: Option[String] = None
     var maybe_query: Option[String] = None
 
@@ -58,7 +58,7 @@ object FofsequaReasoner {
 
   // Read statements from STDIN
   def read_input_statements: String = {
-    var query = StringBuilder.newBuilder
+    var query = new StringBuilder
     do {
       query.append(StdIn.readLine())
     }
