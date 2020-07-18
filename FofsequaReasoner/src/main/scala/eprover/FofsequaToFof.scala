@@ -66,7 +66,14 @@ object FofsequaToFof {
 
                             // TODO: for each constant, create a statement which is equal to `statement` with `variable` replaced by the constant
                             // then concat these together with `connector` in between them
-                            throw new Error("Quantifying over constant sets isn't supported yet")
+                            // throw new Error("Quantifying over constant sets isn't supported yet")
+
+
+                            constants.map(constant_tuple => {
+                                val additional_substitutions = variable_list.zip(constant_tuple.constants)
+                                stringify(substitutions ++ additional_substitutions, statement)
+                            })
+                          .mkString(' ' + connector + ' ')
                         }
                         // throw new Error("can't directly stringify BasicConstantSet, only through stringify(substitutions, QuantifiedStatement)")
                         case PatternVar(name) => {
