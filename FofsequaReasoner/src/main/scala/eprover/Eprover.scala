@@ -13,10 +13,10 @@ object Eprover {
     //Some("eprover")
     //(Eprover.getClass.getProtectionDomain.getCodeSource.getLocation + "../../../eprover-executable/PROVER/eprover").substring(5)
     //"./eprover-executable/PROVER/eprover"
+  val config_file_path = "./fofsequa.conf"
 
   // Tries to locate the eprover executable and set `path_to_eprover`. Returns whether this was successful.
   def locate_eprover_executable(): Boolean = {
-    val config_file_path = "./fofsequa.conf"
 
     val config_file_exists =
       if(Files.exists(Paths.get(config_file_path))) true
@@ -24,21 +24,7 @@ object Eprover {
         println("Could not locate configuration file 'fofsequa.conf'. Should it be created ? Enter y, yes, n, or no")
 
         StdIn.readLine() match {
-          case "y" | "yes" => {
-            try {
-              val config_file = new File(config_file_path)
-              val writer = new FileWriter(config_file)
-              writer.append("eprover_path=./eprover-executable/PROVER/eprover")
-              writer.close()
-              true
-            }
-            catch {
-              case exception: Throwable => {
-                println("Could not create config file")
-                throw exception
-              }
-            }
-          }
+          case "y" | "yes" => create_config_file()
           case _ => false
         }
       }
@@ -88,6 +74,22 @@ object Eprover {
       found_eprover_path_in_config
     }
     else false  //config file does not exist
+  }
+
+  def create_config_file() = {
+    try {
+      val config_file = new File(config_file_path)
+      val writer = new FileWriter(config_file)
+      writer.append("eprover_path=./eprover-executable/PROVER/eprover")
+      writer.close()
+      true
+    }
+    catch {
+      case exception: Throwable => {
+        println("Could not create config file")
+        throw exception
+      }
+    }
   }
 
   def get_path_to_eprover(): String = path_to_eprover match {
