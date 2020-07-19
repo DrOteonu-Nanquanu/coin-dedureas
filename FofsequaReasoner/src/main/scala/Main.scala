@@ -15,8 +15,6 @@ object FofsequaReasoner {
 
   // Reads a KB and query from the commandline arguments and STDIN, evaluates them, and outputs the result
   def console_interface(args: Array[String]): Unit = {
-    Eprover.locate_eprover_executable()
-
     var maybe_kb: Option[String] = None
     var maybe_query: Option[String] = None
 

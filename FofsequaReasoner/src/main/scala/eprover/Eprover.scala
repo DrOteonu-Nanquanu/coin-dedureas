@@ -57,8 +57,8 @@ object Eprover {
       }
       finally config_file.close()
 
-      // Return whether the config file contains a line with a path to eprover
-      config_file_lines.exists(line => {
+      // Test whether the config file contains a line with a path to eprover
+      val found_eprover_path_in_config = config_file_lines.exists(line => {
         if(line.contains('=')) {
           val (variable_name, tail): (String, String) = line.splitAt(line.indexOf('='))
           val variable_value = tail.substring(1)
@@ -67,10 +67,11 @@ object Eprover {
             case "eprover_path" => {
               if(Files.exists(Paths.get(variable_value))) {
                 path_to_eprover = Some(variable_value)
-                true
               } else {
-                false
+                println("Found eprover_path variable but couldn't find the executable at the specified path.")
               }
+
+              true
             }
             case _ => false
           }
@@ -79,6 +80,12 @@ object Eprover {
           false
         }
       })
+
+      if(!found_eprover_path_in_config) {
+        println("Variable eprover_path does not exist in config file. Add the following line to " + config_file_path + ": eprover_path=<path_to_executable>")
+      }
+      // Return
+      found_eprover_path_in_config
     }
     else false  //config file does not exist
   }
@@ -93,7 +100,7 @@ object Eprover {
         }
       }
       else {
-        throw new FileNotFoundException("eprover executable not found")
+        throw new Exception("eprover executable not found")
       }
     }
   }
