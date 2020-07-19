@@ -76,11 +76,11 @@ object Eprover {
     else false  //config file does not exist
   }
 
-  def create_config_file() = {
+  def create_config_file(path_to_eprover: String = "./eprover-executable/PROVER/eprover") = {
     try {
       val config_file = new File(config_file_path)
       val writer = new FileWriter(config_file)
-      writer.append("eprover_path=./eprover-executable/PROVER/eprover")
+      writer.append("eprover_path=" + path_to_eprover)
       writer.close()
       true
     }
@@ -95,14 +95,10 @@ object Eprover {
   def get_path_to_eprover(): String = path_to_eprover match {
     case Some(path) => path
     case None => {
-      if(locate_eprover_executable()) {
-        path_to_eprover match {
-          case Some(path) => path
-          case None => throw new Exception("Unreachable code")
-        }
-      }
-      else {
-        throw new Exception("eprover executable not found")
+      locate_eprover_executable()
+      path_to_eprover match {
+        case Some(path) => path
+        case None => throw new Exception("eprover executable not found")
       }
     }
   }
