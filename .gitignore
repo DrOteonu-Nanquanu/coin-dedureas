@@ -8,4 +8,6 @@ out
 eprover-executable
 eprover-test.tptp
 
+fofsequa.conf
+
 *.pdf
