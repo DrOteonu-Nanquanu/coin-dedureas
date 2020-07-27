@@ -4,6 +4,7 @@ import org.nanquanu.fofsequa
 import org.nanquanu.fofsequa._
 import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, Kb_parse_exception, Query_parse_exception, Invalid_query_exception}
 
+import scala.collection.immutable.HashMap
 import scala.io.{Source, StdIn}
 import scala.util.{Failure, Success, Try}
 
@@ -55,7 +56,7 @@ object FofsequaReasoner {
 
   // Read statements from STDIN
   def read_input_statements: String = {
-    var query = StringBuilder.newBuilder
+    var query = new StringBuilder
     do {
       query.append(StdIn.readLine())
     }
