@@ -2,7 +2,7 @@ package org.nanquanu.fofsequa_reasoner
 import eprover._
 import org.nanquanu.fofsequa
 import org.nanquanu.fofsequa._
-import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, Kb_parse_exception, Query_parse_exception, Reasoning_exception, Reasoning_parse_exception}
+import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, Kb_parse_exception, Query_parse_exception, Invalid_query_exception}
 
 import scala.io.{Source, StdIn}
 import scala.util.{Failure, Success, Try}
@@ -83,9 +83,31 @@ object FofsequaReasoner {
       case error: FolseqParser.NoSuccess => return Failure(Kb_parse_exception(error))
     }
 
+    // TODO: check if containing valid quantifier over pattern variable
+
+    val missing_quantifier_over_pattern_variable_exception = Failure(Invalid_query_exception("Goal should start with a quantifier over a pattern variable"))
+
+    // Get the amount of elements each tuple should contain in the constant tuple set that will replace the pattern variable
+    val tuple_size = parsed_goal match {
+      case QuantifiedStatement(quantifier, arguments, statement) => {
+        quantifier match {
+          case Exists() => return Failure(Invalid_query_exception("Existential quantifiers with a pattern variable aren't supported"))
+          case _ => ()
+        }
+
+        arguments match {
+          case ConstantSetQuantifierArguments(variables, constant_set) => constant_set match {
+            case BasicConstantSet(constants) => return  missing_quantifier_over_pattern_variable_exception
+            case PatternVar(name) => variables.length
+          }
+          case BasicQuantifierArguments(variables) => return missing_quantifier_over_pattern_variable_exception
+        }
+      }
+    }
+
     val eprover_answer = Eprover.evaluate_TPTP(FofsequaToFof.to_tptp(parsed_knowledge_base, parsed_goal))
 
-    Success(Eprover.get_answer_tuples(eprover_answer))
+    Success(Eprover.get_answer_tuples(eprover_answer, tuple_size))
   }
 
   def evaluate_fofsequa(knowledge_base: String, goal: String): Try[Statement] = {

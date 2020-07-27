@@ -38,7 +38,7 @@ object FofsequaToFof {
         case Exists() => "?"
     }
 
-    def stringify(statement : QuantifiedStatement, is_upper_level: Boolean): String = statement match {
+    def stringify(statement: QuantifiedStatement, is_upper_level: Boolean): String = statement match {
         case QuantifiedStatement(quantifier, arguments, statement) =>
         {
             arguments match {

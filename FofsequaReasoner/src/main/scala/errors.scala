@@ -14,6 +14,10 @@ case class Format_exception(message: String) extends Reasoning_exception {
   override def getMessage = message
 }
 
+case class Invalid_query_exception(message: String) extends Reasoning_exception {
+  override def getMessage: String = message
+}
+
 case class Cli_exception(message: String) extends Exception {
   override def getMessage: String = message
 }

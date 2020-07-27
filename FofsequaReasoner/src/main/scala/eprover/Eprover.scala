@@ -44,7 +44,7 @@ object Eprover {
   def execute(file_name: String) : String = ((path_to_eprover() + eprover_arguments + file_name) lineStream_!).mkString("\n")
 
   // Extract the answer tuples from Eprover's answer
-  def get_answer_tuples(eprover_answer: String): List[List[String]] = {
+  def get_answer_tuples(eprover_answer: String, expected_elements_per_tuple: Int): List[List[String]] = {
     val answer_start = "# SZS answers Tuple [["
 
     eprover_answer.split("\n").toList.flatMap(line => {
@@ -61,7 +61,7 @@ object Eprover {
           throw new Error("unexpected tail: " + tail)
         }
 
-        List(variable_names.toList)
+        List(variable_names.take(expected_elements_per_tuple).toList)
       }
       else {
         List()
