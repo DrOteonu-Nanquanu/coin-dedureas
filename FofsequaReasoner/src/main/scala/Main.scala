@@ -78,7 +78,7 @@ object FofsequaReasoner {
     evaluate_fofsequa_to_string(lines, query)
   }
 
-  def evaluate_to_answer_tuples(knowledge_base: String, parsed_goal: Statement): Try[List[List[String]]] = {
+  def evaluate_to_answer_tuples(knowledge_base: String, parsed_goal: Statement): Try[List[List[QuotedString]]] = {
     val parsed_knowledge_base = FolseqParser.parseAll(FolseqParser.fofsequa_document, knowledge_base) match {
       case FolseqParser.Success(result, next) => result
       case error: FolseqParser.NoSuccess => return Failure(Kb_parse_exception(error))
@@ -124,7 +124,10 @@ object FofsequaReasoner {
       case Success(answer_tuples) => answer_tuples.map (list_of_constant_names => {
         // Convert list of constant names to constant tuple
         val answers_as_constants = list_of_constant_names.map (
-          constant_name => Constant (LowercaseID (constant_name.toLowerCase () ) )
+          {
+            case SingleQuotedString(constant_name) => Constant(LowercaseID(constant_name.toLowerCase()))
+            case DoubleQuotedString(digital_entity_text) => DigitalEntity(digital_entity_text)
+          }
         )
         ConstantTuple (answers_as_constants)
       })

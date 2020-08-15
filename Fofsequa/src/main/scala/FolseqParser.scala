@@ -57,14 +57,15 @@ object FolseqParser extends RegexParsers {
   // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
   def fol_term_list : Parser[List[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => List(term) ++ termList } | fol_term ^^ { List(_) }
 
-  // <fol_term> ::= <var> | <constant> | <fol_function>(<fol_term_list>)
+  // <fol_term> ::= <digital_entitiy> |  <var> | <constant> | <fol_function>(<fol_term_list>)
   def fol_term: Parser[FolTerm] =
     digital_entity ^^ DigitalEntityTerm |
     variable ^^ VariableTerm |
     constant ^^ ConstantTerm |
     fol_function ~ "(" ~ fol_term_list ~ ")" ^^ { case function ~ _ ~ termList ~ _  => FunctionApplication(function, termList) }
 
-  def digital_entity = '"' ~ "([A-z0-9]| )*".r ~ '"' ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
+  // <digital_entitiy> ::= "([A-z0-9]| )+"
+  def digital_entity = '"' ~ "([A-z0-9]| )+".r ~ '"' ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
 
   // <var> ::= <lowercase_id>
   def variable = lowercase_ID ^^ { Variable(_) }
@@ -156,7 +157,7 @@ case class PatternVar(name: LowercaseID) extends ConstantSet {
   override def toString: String = name.toString + "_"
 }
 
-case class ConstantTuple(constants: Seq[Constant]) {
+case class ConstantTuple(constants: Seq[Constant | DigitalEntity]) {
   override def toString(): String = if(constants.length == 1) {
     constants.head.toString()
   }

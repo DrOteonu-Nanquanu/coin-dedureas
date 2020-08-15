@@ -1,10 +1,9 @@
 package org.nanquanu.fofsequa_reasoner.eprover
 
-import java.io.{BufferedWriter, File, FileNotFoundException, FileWriter, PrintWriter}
+import java.io.{File, FileWriter, PrintWriter}
 import java.nio.file.{Files, Paths}
 
 import scala.io.{Source, StdIn}
-import scala.jdk.CollectionConverters
 import sys.process._
 import scala.language.postfixOps
 
@@ -128,7 +127,7 @@ object Eprover {
   def execute(file_name: String) : String = ((get_path_to_eprover() + eprover_arguments + file_name) lineStream_!).mkString("\n")
 
   // Extract the answer tuples from Eprover's answer
-  def get_answer_tuples(eprover_answer: String, expected_elements_per_tuple: Int): List[List[String]] = {
+  def get_answer_tuples(eprover_answer: String, expected_elements_per_tuple: Int): List[List[QuotedString]] = {
     val answer_start = "# SZS answers Tuple [["
 
     eprover_answer.split("\n").toList.flatMap(line => {
@@ -136,9 +135,18 @@ object Eprover {
 
       if(start == answer_start) {
         val (quoted_variables, tail) = end.splitAt(end.indexOf(']'))
-        val variable_names = quoted_variables.filter(_ != ' ')
-          .split(",").map(
-          quoted_variable => quoted_variable.slice(1, quoted_variable.length - 1)
+        // println("quoted variables = " + quoted_variables)
+        val variable_names = quoted_variables
+          //.filter(_ != ' ')
+          .split(", ").map(
+          quoted_variable => {
+            val unquoted = quoted_variable.slice(1, quoted_variable.length - 1)
+            val quotation_mark = quoted_variables[0]
+            quotation_mark match {
+              case '"' => DoubleQuotedString(unquoted)
+              case ''' => SingleQuotedString(unquoted)
+            }
+          }
         )
 
         if(tail != "]|_]"){
@@ -152,4 +160,14 @@ object Eprover {
       }
     })
   }
+}
+
+abstract class QuotedString {
+  abstract def text: String
+}
+case class SingleQuotedString(quoted_text: String) extends QuotedString {
+  override def text = quoted_text
+}
+case class DoubleQuotedString(quoted_text: String) extends QuotedString {
+  override def text = quoted_text
 }

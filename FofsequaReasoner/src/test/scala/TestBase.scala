@@ -14,7 +14,8 @@ class Test_base extends AnyFlatSpec {
       ("test_fofsequa_kb.txt", "![x from s_]: Q(x)"),
       ("test_fofsequa_kb2.txt", "![x, y from s_]: R(x, y)"),
       ("test_fofsequa_kb2.txt", "![x, y, z from s_]: T(x, y, z)"),
-      ("test_fofsequa_kb2.txt", "![x from s_]: ?[y]: R(x, y)"), // TODO: this query returns ![x from {<'r','p'>,<'x','y'>,<'p','r'>,<'y','x'>}]:?[y]:R(x,y)
+      ("test_fofsequa_kb2.txt", "![x from s_]: ?[y]: R(x, y)"),
+      ("test_fofsequa_kb3.fsq", "![x, y from s_]: Description(x, y)")
     )) {
       assert(FofsequaReasoner.evaluate_file(file, query) match {
         case Success(value) => {

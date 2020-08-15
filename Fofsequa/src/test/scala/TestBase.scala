@@ -9,4 +9,10 @@ class TestBase extends AnyFlatSpec{
       case FolseqParser.NoSuccess(error, _) => throw new Exception(error)
     }
   }
+
+  "Empty digital entity" should "not parse" in {
+    val parse_result = FolseqParser.parseAll(FolseqParser.digital_entity, "\"\"")
+
+    assert(!parse_result.successful)
+  }
 }
