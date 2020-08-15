@@ -59,9 +59,12 @@ object FolseqParser extends RegexParsers {
 
   // <fol_term> ::= <var> | <constant> | <fol_function>(<fol_term_list>)
   def fol_term: Parser[FolTerm] =
-    variable ^^ { VariableTerm(_) } |
-    constant ^^ { ConstantTerm(_) } |
+    digital_entity ^^ DigitalEntityTerm |
+    variable ^^ VariableTerm |
+    constant ^^ ConstantTerm |
     fol_function ~ "(" ~ fol_term_list ~ ")" ^^ { case function ~ _ ~ termList ~ _  => FunctionApplication(function, termList) }
+
+  def digital_entity = '"' ~ "([A-z0-9]| )*".r ~ '"' ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
 
   // <var> ::= <lowercase_id>
   def variable = lowercase_ID ^^ { Variable(_) }
@@ -199,6 +202,14 @@ case class FolPredicate(name: UppercaseID) {
 }
 
 sealed abstract class FolTerm()
+
+case class DigitalEntityTerm(digitalEntity: DigitalEntity) extends FolTerm {
+  override def toString: String = '"' + digitalEntity.toString + '"'
+}
+case class DigitalEntity(text: String) {
+  override def toString: String = '"' + text + '"'
+}
+
 case class FunctionApplication(function: FolFunction, terms: Seq[FolTerm]) extends FolTerm {
   override def toString: String = function.toString + terms.mkString("(", ",", ")")
 }
