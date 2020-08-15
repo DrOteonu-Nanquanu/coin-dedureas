@@ -125,7 +125,10 @@ object FofsequaToFof {
         case ConstantTerm(constant) => stringify(substitutions, constant)
         case FunctionApplication(function, terms) => stringify(substitutions, function) + "(" + stringify_term_list(substitutions, terms) + ")"
         case VariableTerm(variable) => stringify(substitutions, variable)
+        case DigitalEntityTerm(digital_entity) => stringify(substitutions, digital_entity)
     }
+
+    def stringify(substitutions: immutable.HashMap[Variable, Constant], digital_entity: DigitalEntity): String = '"' + digital_entity.text + '"'
 
     def stringify(substitutions: immutable.HashMap[Variable, Constant], constant: Constant) : String = "'" + stringify(substitutions, constant.id) + "'"
 

@@ -57,14 +57,15 @@ object FolseqParser extends RegexParsers {
   // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
   def fol_term_list : Parser[List[FolTerm]] = fol_term ~ ", *".r ~ fol_term_list ^^ { case term ~ _ ~ termList => List(term) ++ termList } | fol_term ^^ { List(_) }
 
-  // <fol_term> ::= <var> | <constant> | <fol_function>(<fol_term_list>)
+  // <fol_term> ::= <digital_entitiy> |  <var> | <constant> | <fol_function>(<fol_term_list>)
   def fol_term: Parser[FolTerm] =
     digital_entity ^^ DigitalEntityTerm |
     variable ^^ VariableTerm |
     constant ^^ ConstantTerm |
     fol_function ~ "(" ~ fol_term_list ~ ")" ^^ { case function ~ _ ~ termList ~ _  => FunctionApplication(function, termList) }
 
-  def digital_entity = '"' ~ "([A-z0-9]| )*".r ~ '"' ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
+  // <digital_entitiy> ::= "([A-z0-9]| )+"
+  def digital_entity = " *\"".r ~ "([A-z0-9]| )+".r ~ "\" *".r ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
 
   // <var> ::= <lowercase_id>
   def variable = lowercase_ID ^^ { Variable(_) }
@@ -79,29 +80,32 @@ object FolseqParser extends RegexParsers {
   def fol_function = lowercase_ID ^^ { FolFunction(_) }
 
   // <quantified_formula> ::= <quantifier>[<quantifier_arguments>]: <fofsequa_statement>
-  def quantified_formula = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
+  def quantified_formula: FolseqParser.Parser[QuantifiedStatement] = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
 
   // <quantifier> ::= ! | ?
   def quantifier: Parser[Quantifier] = "!" ^^ {x => ForAll()} | "?" ^^ {x => Exists()}
 
   // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
-  def quantifier_arguments = variable_list ~ "from" ~ constant_set ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
+  def quantifier_arguments: FolseqParser.Parser[QuantifierArguments] = variable_list ~ "from" ~ constant_set ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
     variable_list ^^ { BasicQuantifierArguments(_) }
 
-  // <fol_variable_list> ::= <var> | <fol_variable_list>, <fol_variable_list>
-  def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
+  // <fol_variable_list> ::= <var> | <var>, <fol_variable_list>
+  def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).+ ^^ {case first_var ~ var_list => first_var :: var_list}
 
   // <constant_set> ::= {<constant_set_elements>} | <pattern_var>
-  def constant_set = "{" ~ constant_set_elements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
+  def constant_set: Parser[ConstantSet] = "{" ~ constant_set_elements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
 
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
-  def constant_set_elements = constant_tuple ~ ("," ~ constant_tuple ^^ {case _comma ~ tuple => tuple}).* ^^ {case c ~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
+  def constant_set_elements: FolseqParser.Parser[List[ConstantTuple]] = constant_tuple ~ ("," ~ constant_tuple ^^ {case _comma ~ tuple => tuple}).* ^^ {case c ~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
 
-  // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)*">"
-  def constant_tuple = constant ^^ {const => ConstantTuple(List(const))} | ("<" ~ constant ~ ("," ~ constant ^^ {case _ ~ const => const}).* ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
+  // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)+">"
+  def constant_tuple: FolseqParser.Parser[ConstantTuple] = constant_like ^^ { const => ConstantTuple(List(const))} |
+    ("<" ~ constant_like ~ ("," ~ constant_like ^^ {case _ ~ const => const}).+ ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
+
+  def constant_like: Parser[ConstantLike] = constant | digital_entity
 
   // <pattern_var> ::= <lowercase_id>_
-  def patternVar =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
+  def patternVar: FolseqParser.Parser[PatternVar] =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
 }
 
 /*
@@ -156,16 +160,16 @@ case class PatternVar(name: LowercaseID) extends ConstantSet {
   override def toString: String = name.toString + "_"
 }
 
-case class ConstantTuple(constants: Seq[Constant]) {
-  override def toString(): String = if(constants.length == 1) {
-    constants.head.toString()
+case class ConstantTuple(constants: Seq[ConstantLike]) {
+  override def toString: String = if(constants.length == 1) {
+    constants.head.toString
   }
   else {
     constants.map(_.toString).mkString("<", ",", ">")
   }
 }
 
-case class Constant(id: LowercaseID)  {
+case class Constant(id: LowercaseID) extends ConstantLike {
   override def toString: String = "'" + id.toString + "'"
 }
 case class Variable(id: LowercaseID) {
@@ -197,6 +201,8 @@ case class Iff() extends BinaryConnective {
   override def toString: String = "<=>"
 }
 
+trait ConstantLike
+
 case class FolPredicate(name: UppercaseID) {
   override def toString: String = name.toString
 }
@@ -206,7 +212,7 @@ sealed abstract class FolTerm()
 case class DigitalEntityTerm(digitalEntity: DigitalEntity) extends FolTerm {
   override def toString: String = '"' + digitalEntity.toString + '"'
 }
-case class DigitalEntity(text: String) {
+case class DigitalEntity(text: String) extends ConstantLike {
   override def toString: String = '"' + text + '"'
 }
 
