@@ -89,8 +89,8 @@ object FolseqParser extends RegexParsers {
   def quantifier_arguments: FolseqParser.Parser[QuantifierArguments] = variable_list ~ "from" ~ constant_set ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
     variable_list ^^ { BasicQuantifierArguments(_) }
 
-  // <fol_variable_list> ::= <var> | <fol_variable_list>, <fol_variable_list>
-  def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
+  // <fol_variable_list> ::= <var> | <var>, <fol_variable_list>
+  def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).+ ^^ {case first_var ~ var_list => first_var :: var_list}
 
   // <constant_set> ::= {<constant_set_elements>} | <pattern_var>
   def constant_set: Parser[ConstantSet] = "{" ~ constant_set_elements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
@@ -98,9 +98,9 @@ object FolseqParser extends RegexParsers {
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
   def constant_set_elements: FolseqParser.Parser[List[ConstantTuple]] = constant_tuple ~ ("," ~ constant_tuple ^^ {case _comma ~ tuple => tuple}).* ^^ {case c ~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
 
-  // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)*">"
+  // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)+">"
   def constant_tuple: FolseqParser.Parser[ConstantTuple] = constant_like ^^ { const => ConstantTuple(List(const))} |
-    ("<" ~ constant_like ~ ("," ~ constant_like ^^ {case _ ~ const => const}).* ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
+    ("<" ~ constant_like ~ ("," ~ constant_like ^^ {case _ ~ const => const}).+ ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
 
   def constant_like: Parser[ConstantLike] = constant | digital_entity
 

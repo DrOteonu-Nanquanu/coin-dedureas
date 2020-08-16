@@ -27,12 +27,11 @@ class TestBase extends AnyFlatSpec {
   }
 
   "Constant tuple of digital-entities" should "parse correctly" in {
-    val parse_result = FolseqParser.parseAll(FolseqParser.constant_tuple, """<"a", "b", "abc 123">""")
+    val parse_result = FolseqParser.parseAll(FolseqParser.constant_tuple, """<"a", "abc 123">""")
     parse_result match {
       case FolseqParser.Success(constant_tuple, _) =>
         assert(constant_tuple == ConstantTuple(List(
           DigitalEntity("a"),
-          DigitalEntity("b"),
           DigitalEntity("abc 123"),
         )))
       case FolseqParser.NoSuccess(error, _) => throw new Exception(error)
@@ -44,16 +43,17 @@ class TestBase extends AnyFlatSpec {
   }
 
   "Constant tuple of constants and digital-entities" should "parse correctly" in {
-    val parse_result = FolseqParser.parseAll(FolseqParser.constant_tuple, """<'a', 'b', "abc 123">""")
-    parse_result match {
-      case FolseqParser.Success(constant_tuple, _) =>
-        assert(constant_tuple == ConstantTuple(List(
-          Constant(LowercaseID("a")),
-          Constant(LowercaseID("b")),
-          DigitalEntity("abc 123"),
-        )))
-      case FolseqParser.NoSuccess(error, _) => throw new Exception(error)
-    }
+    parse_equals(FolseqParser.constant_tuple, """<"abc 123", 'a', 'b'>""", ConstantTuple(List(
+      DigitalEntity("abc 123"),
+      Constant(LowercaseID("a")),
+      Constant(LowercaseID("b")),
+    )))
+
+    parse_equals(FolseqParser.constant_tuple, """<'a', 'b', "abc 123">""", ConstantTuple(List(
+      Constant(LowercaseID("a")),
+      Constant(LowercaseID("b")),
+      DigitalEntity("abc 123"),
+    )))
   }
 
   "Constant_like" should "parse both constants and digital-entities correctly" in {
