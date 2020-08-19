@@ -83,14 +83,14 @@ object FolseqParser extends RegexParsers {
   def quantified_formula: FolseqParser.Parser[QuantifiedStatement] = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
 
   // <quantifier> ::= ! | ?
-  def quantifier: Parser[Quantifier] = "!" ^^ {x => ForAll()} | "?" ^^ {x => Exists()}
+  def quantifier: Parser[Quantifier] = "!" ^^ {_ => ForAll()} | "?" ^^ {_ => Exists()}
 
   // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
   def quantifier_arguments: FolseqParser.Parser[QuantifierArguments] = variable_list ~ "from" ~ constant_set ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
     variable_list ^^ { BasicQuantifierArguments(_) }
 
   // <fol_variable_list> ::= <var> | <var>, <fol_variable_list>
-  def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).+ ^^ {case first_var ~ var_list => first_var :: var_list}
+  def variable_list: Parser[List[Variable]] = variable ~ ("," ~ variable ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
 
   // <constant_set> ::= {<constant_set_elements>} | <pattern_var>
   def constant_set: Parser[ConstantSet] = "{" ~ constant_set_elements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
@@ -201,7 +201,7 @@ case class Iff() extends BinaryConnective {
   override def toString: String = "<=>"
 }
 
-trait ConstantLike
+sealed trait ConstantLike
 
 case class FolPredicate(name: UppercaseID) {
   override def toString: String = name.toString

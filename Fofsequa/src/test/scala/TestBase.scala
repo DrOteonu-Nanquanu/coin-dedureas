@@ -73,4 +73,45 @@ class TestBase extends AnyFlatSpec {
       }*/
     }
   }
+
+  "Quantifiers over constant sets" should "parse and resolve correctly" in {
+    val kb = "![x from {'a', 'b', 'c'}]: P(x)"
+    val query = "![x from s_]: P(x)"
+
+    parse_equals(FolseqParser.quantifier_arguments, "x from {'a', 'b', 'c'}", ConstantSetQuantifierArguments(
+      List(Variable(LowercaseID("x"))),
+      BasicConstantSet(List(
+        ConstantTuple(List(
+          Constant(LowercaseID("a")),
+        )),
+        ConstantTuple(List(
+          Constant(LowercaseID("b")),
+        )),
+        ConstantTuple(List(
+          Constant(LowercaseID("c")),
+        ))
+      ))
+    ))
+
+    parse_equals(
+      FolseqParser.statement,
+      kb,
+
+      QuantifiedStatement(ForAll(), ConstantSetQuantifierArguments(
+        List(Variable(LowercaseID("x"))),
+        BasicConstantSet(List(
+          ConstantTuple(List(
+            Constant(LowercaseID("a")),
+          )),
+          ConstantTuple(List(
+            Constant(LowercaseID("b")),
+          )),
+          ConstantTuple(List(
+            Constant(LowercaseID("c")),
+          ))
+        ))
+      ), AtomStatement(FolPredicate(UppercaseID("P")), List(VariableTerm(Variable(LowercaseID("x")))))),
+
+    )
+  }
 }

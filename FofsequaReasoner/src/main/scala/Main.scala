@@ -119,7 +119,7 @@ object FofsequaReasoner {
 
     // Get the set of tuples that should be substitute the pattern variable
     val answer_constants = evaluate_to_answer_tuples(knowledge_base, parsed_goal) match {
-      case error: Failure[List[List[String]]] => return Failure(error.exception)
+      case error: Failure[List[List[QuotedString]]] => return Failure(error.exception)
 
       case Success(answer_tuples) => answer_tuples.map (list_of_constant_names => {
         // Convert list of constant names to constant tuple

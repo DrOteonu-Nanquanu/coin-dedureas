@@ -39,7 +39,7 @@ class Test_base extends AnyFlatSpec {
     println(
       fofsequa_reasoner.eprover.FofsequaToFof.stringify_document(
         List(org.nanquanu.fofsequa.FolseqParser.parse_statement_or_throw(kb)
-        )))
+    )))
 
     println(
       FofsequaReasoner.evaluate_fofsequa_to_string(kb, query)

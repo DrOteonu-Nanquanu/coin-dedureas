@@ -141,10 +141,10 @@ object Eprover {
           .split(", ").map(
           quoted_variable => {
             val unquoted = quoted_variable.slice(1, quoted_variable.length - 1)
-            val quotation_mark = quoted_variables[0]
+            val quotation_mark = quoted_variables(0)
             quotation_mark match {
               case '"' => DoubleQuotedString(unquoted)
-              case ''' => SingleQuotedString(unquoted)
+              case '\'' => SingleQuotedString(unquoted)
             }
           }
         )
@@ -163,7 +163,7 @@ object Eprover {
 }
 
 abstract class QuotedString {
-  abstract def text: String
+  def text: String
 }
 case class SingleQuotedString(quoted_text: String) extends QuotedString {
   override def text = quoted_text
