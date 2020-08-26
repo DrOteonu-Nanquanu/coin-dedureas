@@ -65,7 +65,7 @@ object FolseqParser extends RegexParsers {
     fol_function ~ "(" ~ fol_term_list ~ ")" ^^ { case function ~ _ ~ termList ~ _  => FunctionApplication(function, termList) }
 
   // <digital_entitiy> ::= "([A-z0-9]| )+"
-  def digital_entity = " *\"".r ~ "([A-z0-9]| )+".r ~ "\" *".r ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
+  def digital_entity = " *\"".r ~ "[A-z0-9 \\-,.!?]+".r ~ "\" *".r ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
 
   // <var> ::= <lowercase_id>
   def variable = lowercase_ID ^^ { Variable(_) }

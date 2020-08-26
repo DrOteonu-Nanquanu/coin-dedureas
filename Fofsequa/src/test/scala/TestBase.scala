@@ -13,11 +13,8 @@ class TestBase extends AnyFlatSpec {
   }
 
   "Digital entities" should "parse correctly" in {
-    val parse_result = FolseqParser.parseAll(FolseqParser.digital_entity, "\"abc 123 def4\"")
-    parse_result match {
-      case FolseqParser.Success(digital_entity, _) => assert(digital_entity == DigitalEntity("abc 123 def4"))
-      case FolseqParser.NoSuccess(error, _) => throw new Exception(error)
-    }
+    parse_equals(FolseqParser.digital_entity, "\"abc 123 def4\"", DigitalEntity("abc 123 def4"))
+    parse_equals(FolseqParser.digital_entity, "\"??A-b c-d.,fe!!\"", DigitalEntity("??A-b c-d.,fe!!"))
   }
 
   "Empty digital entity" should "not parse" in {
@@ -76,7 +73,6 @@ class TestBase extends AnyFlatSpec {
 
   "Quantifiers over constant sets" should "parse and resolve correctly" in {
     val kb = "![x from {'a', 'b', 'c'}]: P(x)"
-    val query = "![x from s_]: P(x)"
 
     parse_equals(FolseqParser.quantifier_arguments, "x from {'a', 'b', 'c'}", ConstantSetQuantifierArguments(
       List(Variable(LowercaseID("x"))),
