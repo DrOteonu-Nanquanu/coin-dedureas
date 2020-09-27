@@ -21,9 +21,7 @@ object FolseqParser extends RegexParsers {
   // TODO: Numbers aren't supported yet
 
   // <fofsequa_document> ::= <fofsequa_statement>+
-  def fofsequa_document: Parser[List[Statement]] = statement ~ ((";" ~ statement) ^^ {case _ ~ stmt => stmt}).* ^^ {
-    case first_statement ~ statement_list => first_statement :: statement_list
-  }
+  def fofsequa_document: Parser[List[Statement]] = ((statement ~ ";") ^^ {case stmt ~ _ => stmt}).*
 
   // TODO: Currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
   //<fofsequa_statement> ::= <unary_connective> <fofsequa_statement> | (<fofsequa_statement> <binary connective> <fofsequa_statement) | <quantified_formula> | <fol_atom>
