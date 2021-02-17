@@ -110,4 +110,10 @@ class TestBase extends AnyFlatSpec {
 
     )
   }
+
+  "Temporal statement" should "parse correctly" in {
+    val parse_result = FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "ValidFrom(123, P('a'))")
+
+    assert(parse_result.successful)
+  }
 }

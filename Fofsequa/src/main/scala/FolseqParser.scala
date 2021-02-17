@@ -7,17 +7,7 @@ import scala.util.parsing.combinator._
 /*
  Parser
 */
-object FolseqParser extends RegexParsers {
-  def parse_or_throw[R](string_to_parse: String, parser: Parser[R]): R = {
-    this.parseAll(parser, string_to_parse) match {
-      case FolseqParser.Success(result, next) => result
-      case error: FolseqParser.NoSuccess => throw errors.Parse_exception(error)
-    }
-  }
-
-  val parse_statement_or_throw = parse_or_throw(_: String, statement)
-  val parse_document_or_throw = parse_or_throw(_: String, fofsequa_document)
-
+trait FolseqParserBase extends RegexParsers {
   // TODO: Numbers aren't supported yet
 
   // <fofsequa_document> ::= <fofsequa_statement>+
@@ -78,13 +68,13 @@ object FolseqParser extends RegexParsers {
   def fol_function = lowercase_ID ^^ { FolFunction(_) }
 
   // <quantified_formula> ::= <quantifier>[<quantifier_arguments>]: <fofsequa_statement>
-  def quantified_formula: FolseqParser.Parser[QuantifiedStatement] = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
+  def quantified_formula: Parser[QuantifiedStatement] = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ statement ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
 
   // <quantifier> ::= ! | ?
   def quantifier: Parser[Quantifier] = "!" ^^ {_ => ForAll()} | "?" ^^ {_ => Exists()}
 
   // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
-  def quantifier_arguments: FolseqParser.Parser[QuantifierArguments] = variable_list ~ "from" ~ constant_set ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
+  def quantifier_arguments: Parser[QuantifierArguments] = variable_list ~ "from" ~ constant_set ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
     variable_list ^^ { BasicQuantifierArguments(_) }
 
   // <fol_variable_list> ::= <var> | <var>, <fol_variable_list>
@@ -94,17 +84,30 @@ object FolseqParser extends RegexParsers {
   def constant_set: Parser[ConstantSet] = "{" ~ constant_set_elements ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar
 
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
-  def constant_set_elements: FolseqParser.Parser[List[ConstantTuple]] = constant_tuple ~ ("," ~ constant_tuple ^^ {case _comma ~ tuple => tuple}).* ^^ {case c ~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
+  def constant_set_elements: Parser[List[ConstantTuple]] = constant_tuple ~ ("," ~ constant_tuple ^^ {case _comma ~ tuple => tuple}).* ^^ {case c ~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
 
   // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)+">"
-  def constant_tuple: FolseqParser.Parser[ConstantTuple] = constant_like ^^ { const => ConstantTuple(List(const))} |
+  def constant_tuple: Parser[ConstantTuple] = constant_like ^^ { const => ConstantTuple(List(const))} |
     ("<" ~ constant_like ~ ("," ~ constant_like ^^ {case _ ~ const => const}).+ ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
 
   def constant_like: Parser[ConstantLike] = constant | digital_entity
 
   // <pattern_var> ::= <lowercase_id>_
-  def patternVar: FolseqParser.Parser[PatternVar] =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
+  def patternVar: Parser[PatternVar] =  lowercase_ID ~ "_" ^^ { case id ~ _ => PatternVar(id) }
 }
+
+object FolseqParser extends FolseqParserBase {
+  def parse_or_throw[R](string_to_parse: String, parser: Parser[R]): R = {
+    this.parseAll(parser, string_to_parse) match {
+      case Success(result, next) => result
+      case error: NoSuccess => throw errors.Parse_exception(error)
+    }
+  }
+  val parse_statement_or_throw = parse_or_throw(_: String, statement)
+  val parse_document_or_throw = parse_or_throw(_: String, fofsequa_document)
+
+}
+
 
 /*
   Data structures

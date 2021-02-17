@@ -3,7 +3,9 @@ target
 *.iml
 *.ipr
 *.iws
-.idea
+.idea/
+.metals/
+
 out
 eprover-executable
 eprover-test.tptp
