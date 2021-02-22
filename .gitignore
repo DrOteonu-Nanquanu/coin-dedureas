@@ -5,7 +5,8 @@ target
 *.iws
 .idea/
 .metals/
-
+.bloop/
+project/
 out
 eprover-executable
 eprover-test.tptp

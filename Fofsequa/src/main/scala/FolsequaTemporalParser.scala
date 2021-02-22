@@ -19,15 +19,19 @@ object FofseqTemporalParser extends FolseqParserBase {
     "ValidTo(" ~ timeStamp ~ "," ~ statement ~ ")" ^^
       { case _ ~ end ~ _ ~ stmt ~ _ => TrueRangeStatement(TimeRange(None, Some(end)), stmt) }
 
-  def timeStamp: Parser[Int] = "[0-9]*".r ^^ {_.toInt}
+  def timeStamp: Parser[Instant] = "[0-9]*".r ^^ {((_: String).toInt) andThen ConcreteInstant}
 }
 
-abstract class TemporalStatement
+sealed abstract class TemporalStatement
 
 case class TrueRangeStatement(range: TimeRange, statement: Statement) extends TemporalStatement
 
 case class TrueAlwaysStatement(statement: Statement) extends TemporalStatement
 
-case class TimeRange(start: Option[Int], end: Option[Int])
+case class TimeRange(start: Option[Instant], end: Option[Instant])
+
+sealed abstract class Instant
+
+case class ConcreteInstant(time: Int) extends Instant 
 
 
