@@ -8,6 +8,11 @@ import scala.util.parsing.combinator._
  Parser
 */
 object FofseqTemporalParser extends FolseqParserBase {
+  override val document = new ReplaceableParser[Parser] {
+    type Return = List[TemporalStatement]
+    def parse = ((temporal_statement ~ ";") ^^ {case stmt ~ _ => stmt}).*
+  }
+
   def fofsequa_temporal_document: Parser[List[TemporalStatement]] = temporal_statement.*
 
   def temporal_statement: Parser[TemporalStatement] =

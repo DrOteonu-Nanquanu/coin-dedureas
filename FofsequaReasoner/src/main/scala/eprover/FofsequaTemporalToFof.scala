@@ -24,5 +24,5 @@ object FofsequaTemporalToFof {
     }
   }
 
-  def on_interval(instant: Instant, interval: TimeRange): Bool = null
+  def on_interval(instant: Instant, interval: TimeRange): Boolean = false
 }
