@@ -12,30 +12,30 @@ trait ReplaceableParser[P[_]] {
 /*
  Parser
 */
-trait FofseqParserBase extends RegexParsers {
+trait FolseqParserBase extends RegexParsers {
   // TODO: Numbers aren't supported yet
 
-  // val ~ = ~
+  val ~~ = ~
 
   val document = new ReplaceableParser[Parser] {
-    type Return = List[statement.Return]
-    def parse = ((statement.parse ~ ";") ^^ {case stmt ~ _ => stmt}).*
+    type Return = List[Statement]
+    def parse = ((statement.parse ~~ ";") ^^ {case stmt ~~ _ => stmt}).*
   }
 
   // <fofsequa_document> ::= <fofsequa_statement>+
-  val fofsequa_document: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
-    type Return = List[statement.Return]
-    def parse = ((statement.parse ~ ";") ^^ {case stmt ~ _ => stmt}).*
+  val fofsequa_document: ReplaceableParser[Parser] = new ReplaceableParser {
+    type Return = List[Statement]
+    def parse = ((statement.parse ~~ ";") ^^ {case stmt ~~ _ => stmt}).*
   }
 
   // TODO: Currently, each statement with a binaryConnective has to be surrounded by brackets, this shouldn't be needed and should change in the future
   //<fofsequa_statement> ::= <unary_connective> <fofsequa_statement> | (<fofsequa_statement> <binary connective> <fofsequa_statement) | <quantified_formula> | <fol_atom>
   val statement : ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = Statement
-    def parse = unary_connective.parse ~ statement.parse ^^ { case connective ~ stmt => UnaryConnectiveStatement(connective, stmt) } |
-    "(" ~ statement.parse ~ binary_connective.parse ~ statement.parse ~ ")" ^^ { case _ ~ statement1 ~ connective ~ statement2 ~ _ => BinaryConnectiveStatement(statement1, connective, statement2) } |
-    quantified_formula.parse |
-    fol_atom.parse
+    def parse = unary_connective ~~ statement.parse ^^ { case connective ~ stmt => UnaryConnectiveStatement(connective, stmt) } |
+    "(" ~~ statement.parse ~~ binary_connective ~~ statement.parse ~~ ")" ^^ { case _ ~~ statement1 ~~ connective ~~ statement2 ~~ _ => BinaryConnectiveStatement(statement1, connective, statement2) } |
+    quantified_formula |
+    fol_atom
   }
 
   // <unary_connective> ::= not
@@ -54,15 +54,15 @@ trait FofseqParserBase extends RegexParsers {
   }
 
   // <fol_atom> ::= <fol_predicate>(<fol_term_list>) | <fol_term> = <fol_term>
-  val fol_atom : ReplaceableParser[Parser]{ type Return = AtomStatement } = new ReplaceableParser[Parser] {
+  val fol_atom : ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = AtomStatement
-    def parse = fol_predicate.parse ~ "(" ~ fol_term_list.parse ~ ")" ^^ { case predicate ~ _ ~ termList ~ _ => AtomStatement(predicate, termList) }
+    def parse = fol_predicate ~~ "(" ~~ fol_term_list ~~ ")" ^^ { case predicate ~~ _ ~~ termList ~~ _ => AtomStatement(predicate, termList) }
   }
 
   // <fol_predicate> ::= <uppercase_id> | <predifined_predicate>
   val fol_predicate : ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = FolPredicate
-    def parse = uppercase_ID.parse ^^ { FolPredicate(_) }
+    def parse = uppercase_ID ^^ { FolPredicate(_) }
   }
 
   // sequence of alphabetical characters, starting with upper case
@@ -81,24 +81,23 @@ trait FofseqParserBase extends RegexParsers {
 
   // <fol_term_list> ::= <fol_term> | <fol_term_list>, <fol_term_list>
   val fol_term_list : ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
-    // TODO: Should be FolTermList
-    type Return = List[fol_term.Return]
-    def parse = fol_term.parse ~ ", *".r ~ parse ^^ { case term ~ _ ~ termList => List(term) ++ termList } | fol_term.parse ^^ { List(_) }
+    type Return = List[FolTerm]
+    def parse = fol_term ~~ ", *".r ~~ fol_term_list ^^ { case term ~~ _ ~~ termList => List(term) ++ termList } | fol_term ^^ { List(_) }
   }
 
   // <fol_term> ::= <digital_entitiy> |  <var> | <constant> | <fol_function>(<fol_term_list>)
   val fol_term: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = FolTerm
-    def parse = digital_entity.parse ^^ DigitalEntityTerm |
+    digital_entity.parse ^^ DigitalEntityTerm |
     variable.parse ^^ VariableTerm |
     constant.parse ^^ ConstantTerm |
-    fol_function.parse ~ "(" ~ fol_term_list.parse ~ ")" ^^ { case function ~ _ ~ termList ~ _  => FunctionApplication(function, termList) }
+    fol_function.parse ~~ "(" ~~ fol_term_list.parse ~~ ")" ^^ { case function ~~ _ ~~ termList ~~ _  => FunctionApplication(function, termList) }
   }
 
   // <digital_entitiy> ::= "([A-z0-9]| )+"
-  val digital_entity : ReplaceableParser[Parser]{ type Return = DigitalEntity} = new ReplaceableParser[Parser] {
+  val digital_entity : ReplaceableParser[Parser]{ type Return = ConstantLike} = new ReplaceableParser[Parser] {
     type Return = DigitalEntity
-    def parse = " *\"".r ~ "[A-z0-9 \\-,.!?]+".r ~ "\" *".r ^^ { case _ ~ text ~ _ => DigitalEntity(text)}
+    def parse = " *\"".r ~~ "[A-z0-9 \\-,.!?]+".r ~~ "\" *".r ^^ { case _ ~~ text ~~ _ => DigitalEntity(text)}
   }
 
   // <var> ::= <lowercase_id>
@@ -116,7 +115,7 @@ trait FofseqParserBase extends RegexParsers {
   // <constant> ::= '<lowercase_id>' | <decimal_integer>
   val constant : ReplaceableParser[Parser]{ type Return = ConstantLike} = new ReplaceableParser[Parser] {
     type Return = ConstantLike
-    def parse = "\'" ~ lowercase_ID.parse ~ "\'" ^^ { case _ ~ name ~ _ => Constant(name) }
+    def parse = "\'" ~~ lowercase_ID.parse ~~ "\'" ^^ { case _ ~~ name ~~ _ => Constant(name) }
   }
 
   // <fol_function> ::= <lowercase_id>
@@ -126,9 +125,9 @@ trait FofseqParserBase extends RegexParsers {
   }
 
   // <quantified_formula> ::= <quantifier>[<quantifier_arguments>]: <fofsequa_statement>
-  val quantified_formula: ReplaceableParser[Parser]{ type Return = QuantifiedStatement }  = new ReplaceableParser[Parser] {
+  val quantified_formula: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = QuantifiedStatement
-    def parse = quantifier.parse ~ "[" ~ quantifier_arguments.parse ~ "]:" ~ statement.parse ^^ { case quant ~ _ ~ quantArguments ~ _ ~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
+    def parse = quantifier.parse ~~ "[" ~~ quantifier_arguments.parse ~~ "]:" ~~ statement.parse ^^ { case quant ~~ _ ~~ quantArguments ~~ _ ~~ stmt => QuantifiedStatement(quant, quantArguments, stmt) }
   }
 
   // <quantifier> ::= ! | ?
@@ -140,33 +139,33 @@ trait FofseqParserBase extends RegexParsers {
   // <quantifier_arguments> ::= <fol_variable_list> | <var> from <constant_set>
   val quantifier_arguments: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = QuantifierArguments
-    def parse = variable_list.parse ~ "from" ~ constant_set.parse ^^ {case v_list ~ _ ~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
+    def parse = variable_list.parse ~~ "from" ~~ constant_set.parse ^^ {case v_list ~~ _ ~~ c_set => ConstantSetQuantifierArguments(v_list, c_set)} |
     variable_list.parse ^^ { BasicQuantifierArguments(_) }
   }
 
   // <fol_variable_list> ::= <var> | <var>, <fol_variable_list>
-  val variable_list: ReplaceableParser[Parser]{type Return = List[variable.Return]} = new ReplaceableParser[Parser] {
-    type Return = List[variable.Return]
-    def parse = variable.parse ~ ("," ~ variable.parse ^^ {case _comma ~ varname => varname}).* ^^ {case first_var ~ var_list => first_var :: var_list}
+  val variable_list: ReplaceableParser[Parser]{type Return = Seq[A] forSome {type A}} = new ReplaceableParser[Parser] {
+    type Return = List[Variable]
+    def parse = variable.parse ~~ ("," ~~ variable.parse ^^ {case _comma ~~ varname => varname}).* ^^ {case first_var ~~ var_list => first_var :: var_list}
   }
 
   // <constant_set> ::= {<constant_set_elements>} | <pattern_var>
   val constant_set: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = ConstantSet
-    def parse = "{" ~ constant_set_elements.parse ~ "}" ^^ {case _ ~ elements ~ _ => BasicConstantSet(elements)} | patternVar.parse
+    def parse = "{" ~~ constant_set_elements.parse ~~ "}" ^^ {case _ ~~ elements ~~ _ => BasicConstantSet(elements)} | patternVar.parse
   }
 
   // <constant_set_elements> ::= <constant> | <constant>, <constant_set_elements>
   val constant_set_elements: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
-    type Return = List[constant_tuple.Return]
-    def parse = constant_tuple.parse ~ ("," ~ constant_tuple.parse ^^ {case _comma ~ tuple => tuple}).* ^^ {case c ~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~ "," ~ constantSetElements ^^ { case const ~ _ ~ constSetElements => List(const) ++ constSetElements }
+    type Return = List[ConstantTuple]
+    def parse = constant_tuple.parse ~~ ("," ~~ constant_tuple.parse ^^ {case _comma ~~ tuple => tuple}).* ^^ {case c ~~ c_list => c :: c_list}// constant ^^ { List(_) } | constant ~~ "," ~~ constantSetElements ^^ { case const ~~ _ ~~ constSetElements => List(const) ++ constSetElements }
   }
 
   // <constant_tuple> ::= <constant> | "<"<constant>(, <constant>)+">"
   val constant_tuple: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
     type Return = ConstantTuple
     def parse = constant_like.parse ^^ { const => ConstantTuple(List(const))} |
-    ("<" ~ constant_like.parse ~ ("," ~ constant_like.parse ^^ {case _ ~ const => const}).+ ~ ">") ^^ {case _ ~ first_constant ~ constant_list ~ _ => ConstantTuple(first_constant :: constant_list) }
+    ("<" ~~ constant_like.parse ~~ ("," ~~ constant_like.parse ^^ {case _ ~~ const => const}).+ ~~ ">") ^^ {case _ ~~ first_constant ~~ constant_list ~~ _ => ConstantTuple(first_constant :: constant_list) }
   }
 
   val constant_like: ReplaceableParser[Parser] = new ReplaceableParser[Parser] {
@@ -177,7 +176,7 @@ trait FofseqParserBase extends RegexParsers {
   // <pattern_var> ::= <lowercase_id>_
   val patternVar: ReplaceableParser[Parser]{type Return = PatternVar}  = new ReplaceableParser[Parser] {
     type Return = PatternVar
-    def parse = lowercase_ID.parse ~ "_" ^^ { case id ~ _ => PatternVar(id) }
+    def parse = lowercase_ID.parse ~~ "_" ^^ { case id ~~ _ => PatternVar(id) }
   }
   
   /*
@@ -195,12 +194,8 @@ trait FofseqParserBase extends RegexParsers {
     override def toString: String = quantifier.toString + "[" + arguments.toString + "]:" + statement.toString
   }
 
-  case class AtomStatement(predicate: fol_predicate.Return, terms: fol_term_list.Return) extends Statement{
-    override def toString: String = predicate.toString + terms.toString
-  }
-
-  case class FolTermList(terms: List[FolTerm]) {
-    override def toString: String = terms.map(_.toString).mkString("(", ",", ")")
+  case class AtomStatement(predicate: fol_predicate.Return, terms: Seq[fol_term.Return]) extends Statement{
+    override def toString: String = predicate.toString + terms.map(_.toString).mkString("(", ",", ")")
   }
 
   sealed abstract class Quantifier {
@@ -218,7 +213,7 @@ trait FofseqParserBase extends RegexParsers {
   }
 
   sealed abstract class QuantifierArguments
-  case class ConstantSetQuantifierArguments(variables: variable_list.Return, inner_constant_set: constant_set.Return) extends QuantifierArguments {
+  case class ConstantSetQuantifierArguments(variables: Seq[variable.Return], inner_constant_set: constant_set.Return) extends QuantifierArguments {
     override def toString: String = (
         if(variables.length == 1) variables.head.toString
         else variables.mkString(",")
@@ -229,15 +224,14 @@ trait FofseqParserBase extends RegexParsers {
   }
 
   sealed abstract class ConstantSet
-  case class BasicConstantSet(constants: constant_set_elements.Return) extends ConstantSet {
-    // TODO: call mkString on the list constants
-    override def toString: String = constants.toString
+  case class BasicConstantSet(constants: Seq[constant_tuple.Return]) extends ConstantSet {
+    override def toString: String = constants.map(_.toString).mkString("{", ",", "}")
   }
   case class PatternVar(name: lowercase_ID.Return) extends ConstantSet {
     override def toString: String = name.toString + "_"
   }
 
-  case class ConstantTuple(constants: List[constant_like.Return]) {
+  case class ConstantTuple(constants: Seq[constant_like.Return]) {
     override def toString: String = if(constants.length == 1) {
       constants.head.toString
     }
@@ -246,10 +240,10 @@ trait FofseqParserBase extends RegexParsers {
     }
   }
 
-  case class Constant(id: lowercase_ID.Return) extends ConstantLike {
+  case class Constant(id: lowercase_id.Return) extends ConstantLike {
     override def toString: String = "'" + id.toString + "'"
   }
-  case class Variable(id: lowercase_ID.Return) {
+  case class Variable(id: lowercase_id.Return) {
     override def toString: String = id.toString
   }
   case class LowercaseID(name: String) {
@@ -280,7 +274,7 @@ trait FofseqParserBase extends RegexParsers {
 
   sealed trait ConstantLike
 
-  case class FolPredicate(name: uppercase_ID.Return) {
+  case class FolPredicate(name: uppercase_id.Return) {
     override def toString: String = name.toString
   }
 
@@ -293,9 +287,8 @@ trait FofseqParserBase extends RegexParsers {
     override def toString: String = '"' + text + '"'
   }
 
-  case class FunctionApplication(function: fol_function.Return, terms: fol_term_list.Return) extends FolTerm {
-    // TODO: call mkString on the list terms
-    override def toString: String = function.toString + terms.toString
+  case class FunctionApplication(function: fol_function.Return, terms: Seq[fol_term.Return]) extends FolTerm {
+    override def toString: String = function.toString + terms.mkString("(", ",", ")")
   }
   case class ConstantTerm(inner_constant: constant.Return) extends FolTerm {
     override def toString: String = constant.toString
@@ -304,12 +297,12 @@ trait FofseqParserBase extends RegexParsers {
     override def toString: String = variable.toString
   }
 
-  case class FolFunction(name: lowercase_ID.Return) {
+  case class FolFunction(name: lowercase_id.Return) {
     override def toString: String = name.toString
   }
 }
 
-object FofseqParser extends FofseqParserBase {
+object FolseqParser extends FolseqParserBase {
   def parse_or_throw[R](string_to_parse: String, parser: Parser[R]): R = {
     this.parseAll(parser, string_to_parse) match {
       case Success(result, next) => result
@@ -319,9 +312,6 @@ object FofseqParser extends FofseqParserBase {
   val parse_statement_or_throw = parse_or_throw(_: String, statement.parse)
   val parse_document_or_throw = parse_or_throw(_: String, fofsequa_document.parse)
 
-  override val variable : ReplaceableParser[Parser]{type Return = Variable} = variable
-  override val lowercase_ID : ReplaceableParser[Parser]{type Return = LowercaseID} = lowercase_ID
-  //.asInstanceOf[ReplaceableParser[Parser]{type Return = LowercaseID}]
 }
 
 
