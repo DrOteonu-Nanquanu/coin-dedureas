@@ -116,4 +116,19 @@ class TestBase extends AnyFlatSpec {
 
     assert(parse_result.successful)
   }
+
+  "Complex temoral statements" should "parse correctly" in {
+    val successful = List(
+      FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "P('a')"),
+      FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "(P('a') and Q('x'))"),
+      FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "ValidFrom(123, Q('x'))"),
+      FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "(P('a') and ValidFrom(123, Q('x')))"),
+      FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "not (P('a') and ValidFrom(123, Q('x')))"),
+      FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "not ![x]: ValidBetween(3, 12, P(x))"),
+    ).map(_.successful)
+  
+    val all_true = successful.foldLeft(true)((l, r) => l && r)
+
+    assert(all_true)
+  }
 }
