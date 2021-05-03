@@ -16,7 +16,7 @@ object FofseqTemporalParser extends FolseqParserBase {
   def fofsequa_temporal_document: Parser[List[TemporalStatement]] = temporal_statement.*
 
   def temporal_statement: Parser[TemporalStatement] =
-    statement ^^ {TrueAlwaysStatement(_)} |
+    true_always_statement |
     "ValidBetween(" ~ timeStamp ~ "," ~ timeStamp ~ "," ~ statement ~ ")" ^^
       { case _ ~ start ~ _~ end ~ _ ~ stmt ~ _ => TrueRangeStatement(TimeRange(Some(start), Some(end)), stmt) } |
     "ValidFrom(" ~ timeStamp ~ "," ~ statement ~ ")" ^^
@@ -25,13 +25,34 @@ object FofseqTemporalParser extends FolseqParserBase {
       { case _ ~ end ~ _ ~ stmt ~ _ => TrueRangeStatement(TimeRange(None, Some(end)), stmt) }
 
   def timeStamp: Parser[Instant] = "[0-9]*".r ^^ {((_: String).toInt) andThen ConcreteInstant}
+
+  def true_always_statement: Parser[TemporalStatement] =
+    unary_connective ~ true_always_statement ^^ {
+      case connective ~ stmt => TrueAlwaysStatement(UnaryConnectiveAlwaysStatement(connective, stmt))
+    } |
+    "(" ~ temporal_statement ~ binary_connective ~ temporal_statement ~ ")" ^^ {
+      case _ ~ statement1 ~ connective ~ statement2 ~ _ => TrueAlwaysStatement(BinaryConnectiveAlwaysStatement(statement1, connective, statement2))
+    } |
+    // quantified_formula ^^ { formula => TrueAlwaysStatement(QuantifiedAlwaysStatement(formula.quantifier, formula.arguments, (formula.statement)))} |
+    temporal_quantified_formula |
+    temporal_atom
+    
+
+
+  def temporal_quantified_formula: Parser[TemporalStatement] = quantifier ~ "[" ~ quantifier_arguments ~ "]:" ~ temporal_statement ^^ {
+    case quant ~ _ ~ quantArgs ~ _ ~ stmt => TrueAlwaysStatement(QuantifiedAlwaysStatement(quant, quantArgs, stmt))
+  }
+
+  def temporal_atom : Parser[TemporalStatement] = fol_atom ^^ {
+    atom => TrueAlwaysStatement(AtomAlwaysStatement(atom.predicate, atom.terms))
+  }
 }
 
 sealed abstract class TemporalStatement
 
 case class TrueRangeStatement(range: TimeRange, statement: Statement) extends TemporalStatement
 
-case class TrueAlwaysStatement(statement: Statement) extends TemporalStatement
+case class TrueAlwaysStatement(statement: AlwaysStatement) extends TemporalStatement
 
 case class TimeRange(start: Option[Instant], end: Option[Instant])
 
@@ -40,3 +61,17 @@ sealed abstract class Instant
 case class ConcreteInstant(time: Int) extends Instant 
 
 
+sealed abstract class AlwaysStatement
+case class BinaryConnectiveAlwaysStatement(pre_statement: TemporalStatement, connective: BinaryConnective, post_statement: TemporalStatement) extends AlwaysStatement {
+  override def toString: String = pre_statement.toString + connective.toString + post_statement.toString
+}
+case class UnaryConnectiveAlwaysStatement(connective: UnaryConnective, post_statement: TemporalStatement) extends AlwaysStatement {
+  override def toString: String = connective.toString + post_statement.toString
+}
+case class QuantifiedAlwaysStatement(quantifier: Quantifier, arguments: QuantifierArguments, statement: TemporalStatement) extends AlwaysStatement{
+  override def toString: String = quantifier.toString + "[" + arguments.toString + "]:" + statement.toString
+}
+
+case class AtomAlwaysStatement(predicate: FolPredicate, terms: Seq[FolTerm]) extends AlwaysStatement{
+  override def toString: String = predicate.toString + terms.map(_.toString).mkString("(", ",", ")")
+}
