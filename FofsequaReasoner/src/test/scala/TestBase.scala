@@ -59,4 +59,8 @@ class Test_base extends AnyFlatSpec {
       FofsequaReasoner.evaluate_fofsequa_to_string(kb, query)
     )
   }
+
+  "Temp" should "temp" in {
+    org.nanquanu.fofsequa_reasoner.temporal.TemporalReasoner.answer("", "")
+  }
 }
