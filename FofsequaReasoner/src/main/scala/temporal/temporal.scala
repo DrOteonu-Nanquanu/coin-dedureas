@@ -27,6 +27,7 @@ object TemporalReasoner {
       case Some(kb) => kb
     }
 
+    val answer_tuples = null
     throw new NotImplementedError()
   }
 
