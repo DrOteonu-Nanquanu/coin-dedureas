@@ -14,16 +14,20 @@ object Reasoner {
    */
 
   def answer(knowledge_base: String, query: String): Try[String] = 
-    parse(knowledge_base, query).flatMap({case (parsed_knowledge_base, parsed_query) => // Parse query and kb
-      answer_tuples(parsed_knowledge_base, parsed_query)    // Apply E prover
-        .map(to_constant_set _)                             // Convert answer to `BasicConstantSet`
-        .flatMap(substitute_constant_set(parsed_query, _))  // Substitute the answer in the original question
-        .map(_.toString)                                    // Convert back to text
+    parse(knowledge_base, query)                            // Parse query and kb
+    .flatMap({case (parsed_knowledge_base, parsed_query) => 
+      answer_parsed(parsed_knowledge_base, parsed_query)    // Apply reasoner
     })
+    .map(_.toString)                                        // Convert back to text
 
   def parse(fsq_knowledge_base: String, fsq_query: String): Try[(List[Statement], Statement)] =
     parse_knowledge_base(fsq_knowledge_base).flatMap(parsed_knowledge_base =>
         parse_query(fsq_query).map((parsed_knowledge_base, _)))
+
+  def answer_parsed(knowledge_base: List[Statement], query: Statement): Try[Statement] =
+    answer_tuples(knowledge_base, query)          // Apply E prover
+      .map(to_constant_set)                       // Convert answer to `BasicConstantSet`
+      .flatMap(substitute_constant_set(query, _)) // Substitute the answer in the original question
 
   // Parses a knowledge base in Fofsequa syntax into a list of statements
   def parse_knowledge_base(fsq_knowledge_base: String): Try[List[Statement]] =
