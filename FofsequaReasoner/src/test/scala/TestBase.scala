@@ -5,6 +5,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.util.{Failure, Success}
 // import org.scalatest.funsuite.AnyFunSuite
 import org.nanquanu.fofsequa_reasoner.FofsequaReasoner
+import org.nanquanu.fofsequa_reasoner.Reasoner
 
 class Test_base extends AnyFlatSpec {
   // Eprover.PATH_TO_EPROVER = Some("./eprover-executable/PROVER/eprover")
@@ -33,30 +34,30 @@ class Test_base extends AnyFlatSpec {
   }
 
   "Quantifiers over constant sets" should "parse and resolve correctly" in {
-    val kb = "![x from {'a', 'b', 'c'}]: P(x)"
+    val kb = "![x from {'a', 'b', 'c'}]: P(x);"
     val query = "![x from s_]: P(x)"
 
     println(
       fofsequa_reasoner.eprover.FofsequaToFof.stringify_document(
-        List(org.nanquanu.fofsequa.FolseqParser.parse_statement_or_throw(kb)
-    )))
+        org.nanquanu.fofsequa.FolseqParser.parse_document_or_throw(kb)
+    ))
 
     println(
-      FofsequaReasoner.evaluate_fofsequa_to_string(kb, query)
+      Reasoner.answer(kb, query)
     )
   }
 
   "Quantifiers over constant tuple sets" should "parse and resolve correctly" in {
-    val kb = "![x, y from {<'a', 'b'>, <'c', 'd'>}]: R(x, y)"
+    val kb = "![x, y from {<'a', 'b'>, <'c', 'd'>}]: R(x, y);"
     val query = "![x, y from s_]: R(x, y)"
 
     println(
       fofsequa_reasoner.eprover.FofsequaToFof.stringify_document(
-        List(org.nanquanu.fofsequa.FolseqParser.parse_statement_or_throw(kb)
-        )))
+        org.nanquanu.fofsequa.FolseqParser.parse_document_or_throw(kb)
+        ))
 
     println(
-      FofsequaReasoner.evaluate_fofsequa_to_string(kb, query)
+      Reasoner.answer(kb, query)
     )
   }
 }

@@ -141,10 +141,11 @@ object Eprover {
           .split(", ").map(
           quoted_variable => {
             val unquoted = quoted_variable.slice(1, quoted_variable.length - 1)
-            val quotation_mark = quoted_variables(0)
+            val quotation_mark = quoted_variable(0)
             quotation_mark match {
               case '"' => DoubleQuotedString(unquoted)
               case '\'' => SingleQuotedString(unquoted)
+              case _ => throw new Exception("expected either single or double quote")
             }
           }
         )

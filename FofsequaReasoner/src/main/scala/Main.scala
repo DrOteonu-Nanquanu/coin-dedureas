@@ -1,4 +1,5 @@
 package org.nanquanu.fofsequa_reasoner
+
 import eprover._
 import org.nanquanu.fofsequa
 import org.nanquanu.fofsequa._
@@ -75,7 +76,8 @@ object FofsequaReasoner {
 
     val lines = try file.getLines() mkString "\n" finally file.close()
 
-    evaluate_fofsequa_to_string(lines, query)
+    Reasoner.answer(lines, query)
+    // evaluate_fofsequa_to_string(lines, query)
   }
 
   def evaluate_to_answer_tuples(knowledge_base: String, parsed_goal: Statement): Try[List[List[QuotedString]]] = {

@@ -136,7 +136,7 @@ object FofsequaToFof {
     }
 
     def stringify(substitutions: Substitutions, constant: Constant) : String = "'" + stringify(substitutions, constant.id) + "'"
-    def stringify(substitutions: Substitutions, digital_entity: DigitalEntity) : String = "'" + digital_entity.text + "'"
+    def stringify(substitutions: Substitutions, digital_entity: DigitalEntity) : String = "\"" + digital_entity.text + "\""
 
     def stringify(substitutions: Substitutions, function: FolFunction) : String = stringify(substitutions, function.name)
 }
