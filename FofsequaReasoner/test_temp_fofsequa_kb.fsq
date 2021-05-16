@@ -1,0 +1,4 @@
+ValidBetween(0, 3, P('x'));
+P('a');
+Q('c');
+![x]: (P(x) => Q(x));

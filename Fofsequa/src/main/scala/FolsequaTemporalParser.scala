@@ -8,7 +8,7 @@ import scala.util.parsing.combinator._
  Parser
 */
 object FofseqTemporalParser extends FolseqParserBase {
-  def fofsequa_temporal_document: Parser[List[TemporalStatement]] = temporal_statement.*
+  def fofsequa_temporal_document: Parser[List[TemporalStatement]] = (temporal_statement ~ ';' ^^ { case stmt ~ _ => stmt } ).*
 
   def temporal_statement: Parser[TemporalStatement] =
     true_always_statement |
@@ -46,9 +46,31 @@ object FofseqTemporalParser extends FolseqParserBase {
 
 abstract class TemporalStatement
 
-case class TrueRangeStatement(range: TimeRange, statement: Statement) extends TemporalStatement
+case class TrueRangeStatement(range: TimeRange, statement: Statement) extends TemporalStatement {
+  override def toString: String = range match {
+    case TimeRange(Some(start), Some(end)) =>
+      "ValidBetween(" +
+        start.toString + ", " +
+        end.toString + ", " +
+        statement.toString + ")"
 
-case class TrueAlwaysStatement(statement: AlwaysStatement) extends TemporalStatement
+    case TimeRange(Some(start), None) =>
+      "ValidFrom(" +
+        start.toString + ", " +
+        statement.toString + ")"
+
+    case TimeRange(None, Some(end)) =>
+      "ValidTo(" +
+        end.toString + ", " +
+        statement.toString + ")"
+
+    case _ => throw new IllegalArgumentException("TrueRangeStatement has start = None and end = None")
+  }
+}
+
+case class TrueAlwaysStatement(statement: AlwaysStatement) extends TemporalStatement {
+  override def toString: String = statement.toString
+}
 
 case class TimeRange(start: Option[Int], end: Option[Int])
 

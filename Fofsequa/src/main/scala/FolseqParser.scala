@@ -100,7 +100,7 @@ object FolseqParser extends FolseqParserBase {
   def parse_or_throw[R](string_to_parse: String, parser: Parser[R]): R = {
     this.parseAll(parser, string_to_parse) match {
       case Success(result, next) => result
-      case error: NoSuccess => throw errors.Parse_exception(error)
+      case error: NoSuccess => throw errors.Parse_exception(error.msg)
     }
   }
   val parse_statement_or_throw = parse_or_throw(_: String, statement)

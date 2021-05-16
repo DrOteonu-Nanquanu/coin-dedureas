@@ -5,6 +5,8 @@ import org.nanquanu.fofsequa
 import org.nanquanu.fofsequa._
 import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, Kb_parse_exception, Query_parse_exception, Invalid_query_exception}
 
+import org.nanquanu.fofsequa_reasoner.temporal._
+
 import scala.collection.immutable.HashMap
 import scala.io.{Source, StdIn}
 import scala.util.{Failure, Success, Try}
@@ -14,10 +16,13 @@ object FofsequaReasoner {
     console_interface(args)
   }
 
+
+
   // Reads a KB and query from the commandline arguments and STDIN, evaluates them, and outputs the result
   def console_interface(args: Array[String]): Unit = {
     var maybe_kb: Option[String] = None
     var maybe_query: Option[String] = None
+    var temporal = false
 
     // Read commandline argumetns
     for(i <- 0 to args.length - 1) {
@@ -26,37 +31,37 @@ object FofsequaReasoner {
       args(i) match {
         case "--kb" | "-k" => maybe_kb = Some(next)
         case "--query" | "-q" => maybe_query = Some(next)
+        case "--temporal" | "-t" => temporal = true
         case _ => ()
       }
     }
 
-    val answer = maybe_kb match {
-      case Some(kb) => {
-         maybe_query match {
-           case Some(query) => {
-             evaluate_file(kb, query) // Evaluate with a knowledge base in a file given through the commandline arguments and query query through commandline arguments as well
-           }
-           case None => evaluate_file(kb, read_input_statements) // Evaluate with a knowledge base in a file given through the commandline arguments and the query through STDIN
-         }
+    val knowledge_base = maybe_kb match {
+      case Some(file_name) => read_file(file_name) match {
+        case Success(kb) => kb
+        case Failure(err) => throw err
       }
-      case None => {
-        maybe_query match {
-          case Some(query) => evaluate_fofsequa(read_input_statements, query) // Evaluate with a knowledge base given through STDIN and the query through the commandline arguments
-          case None => // No query and no knowledge base. We can only read one from STDIN so that's a problem.
-            Failure(Cli_exception("Supply at least one of the following: a knowledge base through '--kb <file_name>' or a query through '--query <pattern_statement>'"))
-        }
-      }
+      case None => read_input_statements()
     }
+
+    val query = maybe_query match {
+      case Some(q) => q
+      case None => read_input_statements()
+    }
+
+    val answer =
+      if(temporal) { TemporalReasoner.answer(knowledge_base, query) }
+      else { Reasoner.answer(knowledge_base, query) }
 
     // Output result or error
     answer match {
-      case Success(statement) => println(statement.toString)
+      case Success(statement) => println(statement)
       case Failure(exception) => throw exception
     }
   }
 
   // Read statements from STDIN
-  def read_input_statements: String = {
+  def read_input_statements(): String = {
     var query = new StringBuilder
     do {
       query.append(StdIn.readLine())
@@ -64,6 +69,18 @@ object FofsequaReasoner {
     while(query.charAt(query.length - 1) == ';')
 
     query.toString
+  }
+
+  def read_file(file_path: String): Try[String] = {
+    val file = try {
+      Source.fromFile(file_path)
+    } catch {
+      case error: Throwable => return Failure(error)
+    }
+
+    val lines = try file.getLines() mkString "\n" finally file.close()
+
+    Success(lines)
   }
 
   // Evaluate `query` on the knowledge base in the file named `file_path`
@@ -83,7 +100,7 @@ object FofsequaReasoner {
   def evaluate_to_answer_tuples(knowledge_base: String, parsed_goal: Statement): Try[List[List[QuotedString]]] = {
     val parsed_knowledge_base = FolseqParser.parseAll(FolseqParser.fofsequa_document, knowledge_base) match {
       case FolseqParser.Success(result, next) => result
-      case error: FolseqParser.NoSuccess => return Failure(Kb_parse_exception(error))
+      case error: FolseqParser.NoSuccess => return Failure(Kb_parse_exception(error.msg))
     }
 
     // TODO: check if containing valid quantifier over pattern variable
@@ -116,7 +133,7 @@ object FofsequaReasoner {
   def evaluate_fofsequa(knowledge_base: String, goal: String): Try[Statement] = {
     val parsed_goal = FolseqParser.parseAll(FolseqParser.statement, goal) match {
       case FolseqParser.Success(result, next) => result
-      case error: FolseqParser.NoSuccess => return Failure(Query_parse_exception(error))
+      case error: FolseqParser.NoSuccess => return Failure(Query_parse_exception(error.msg))
     }
 
     // Get the set of tuples that should be substitute the pattern variable

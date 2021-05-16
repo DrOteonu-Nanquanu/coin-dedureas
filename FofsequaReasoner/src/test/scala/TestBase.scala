@@ -60,4 +60,15 @@ class Test_base extends AnyFlatSpec {
       Reasoner.answer(kb, query)
     )
   }
+
+  "Temporal Statement" should "answer correctly" in {
+    val kb = """P('x');"""
+
+    val query = "![x from s_]: Q(x)"
+
+    fofsequa_reasoner.temporal.TemporalReasoner.answer(kb, query) match {
+      case Success(answer) => println(answer)
+      case Failure(err) => throw err
+    }
+  }
 }

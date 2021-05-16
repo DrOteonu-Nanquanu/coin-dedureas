@@ -33,14 +33,14 @@ object Reasoner {
   def parse_knowledge_base(fsq_knowledge_base: String): Try[List[Statement]] =
     FolseqParser.parseAll(FolseqParser.fofsequa_document, fsq_knowledge_base) match {
       case FolseqParser.Success(result, next) => Success(result)
-      case error: FolseqParser.NoSuccess => return Failure(Kb_parse_exception(error))
+      case error: FolseqParser.NoSuccess => return Failure(Kb_parse_exception(error.msg))
     }
 
   // Parses a query in Fofsequa syntax into a statement
   def parse_statement(fsq_statement: String): Try[Statement] =
     FolseqParser.parseAll(FolseqParser.statement, fsq_statement) match {
       case FolseqParser.Success(result, next) => Success(result)
-      case error: FolseqParser.NoSuccess => return Failure(Query_parse_exception(error))
+      case error: FolseqParser.NoSuccess => return Failure(Query_parse_exception(error.msg))
     }
 
   val parse_query = parse_statement _

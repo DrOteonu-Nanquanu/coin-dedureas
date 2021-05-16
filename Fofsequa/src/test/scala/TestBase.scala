@@ -117,7 +117,7 @@ class TestBase extends AnyFlatSpec {
     assert(parse_result.successful)
   }
 
-  "Complex temoral statements" should "parse correctly" in {
+  "Complex temporal statements" should "parse correctly" in {
     val successful = List(
       FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "P('a')"),
       FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, "(P('a') and Q('x'))"),
@@ -130,5 +130,20 @@ class TestBase extends AnyFlatSpec {
     val all_true = successful.foldLeft(true)((l, r) => l && r)
 
     assert(all_true)
+  }
+
+  "Multi-line documents" should "parse correctly" in {
+   val parsed_docs = List(
+     """
+P('a');"""
+    ).map(FofseqTemporalParser.parseAll(FofseqTemporalParser.fofsequa_temporal_document, _))
+
+   for(parsed <- parsed_docs) {
+     parsed match {
+       case FofseqTemporalParser.Success(parsed, _) => ()
+       case FofseqTemporalParser.Error(err, _) => throw new Exception(err)
+     }
+   }
+  
   }
 }

@@ -1,13 +1,42 @@
 package org.nanquanu.fofsequa_reasoner.temporal
 
 import org.nanquanu.fofsequa._
+import org.nanquanu.fofsequa_reasoner._
+import org.nanquanu.fofsequa_reasoner.eprover._
+import scala.util.{Failure, Success, Try}
+import org.nanquanu.fofsequa_reasoner.errors.{Cli_exception, Format_exception, Kb_parse_exception, Query_parse_exception, Invalid_query_exception}
 
 object TemporalReasoner {
-  def answer(query: String, kb: String): String = {
-    throw new NotImplementedError()
+  def answer(knowledge_base: String, query: String): Try[String] = {
+    parse(knowledge_base, query)
+    .flatMap({ case (parsed_kb, parsed_query) =>
+      answer_parsed(parsed_kb, parsed_query) })
+    .map(_.toString)
   }
 
-  def answer(query: TemporalStatement, kb: List[TemporalStatement]): TemporalStatement = {
+  def parse_query(query: String): Try[TemporalStatement] = FofseqTemporalParser.parseAll(FofseqTemporalParser.temporal_statement, query) match {
+    case FofseqTemporalParser.Success(parsed, next) => Success(parsed)
+    case error: FofseqTemporalParser.NoSuccess => return Failure(Query_parse_exception(error.msg))
+  }
+  
+  def parse_knowledge_base(knowledge_base: String): Try[List[TemporalStatement]] = FofseqTemporalParser.parseAll(FofseqTemporalParser.fofsequa_temporal_document, knowledge_base) match {
+    case FofseqTemporalParser.Success(parsed, next) => Success(parsed)
+    case error: FofseqTemporalParser.NoSuccess => return Failure(Kb_parse_exception(error.msg))
+  }
+
+  def parse(knowledge_base: String, query: String): Try[(List[TemporalStatement], TemporalStatement)] =
+    parse_knowledge_base(knowledge_base).flatMap(kb =>
+      parse_query(query).map((kb, _))
+    )
+
+
+  def answer_parsed(knowledge_base: List[TemporalStatement], query: TemporalStatement): Try[TemporalStatement] = 
+    answer_to_constant_set(knowledge_base, query)
+      .map(Reasoner.to_constant_set _)
+      .flatMap(substitute_constant_set(query, _))
+
+
+  def answer_to_constant_set(knowledge_base: List[TemporalStatement], query: TemporalStatement): Try[List[List[QuotedString]]] = {
     val (quantifer, arguments, query_statement) = query match {
       case TrueAlwaysStatement(QuantifiedAlwaysStatement(quantifier, arguments, statement)) => {
         (quantifier, arguments, statement)
@@ -17,8 +46,14 @@ object TemporalReasoner {
     }
 
     val query_range = extract_time_range(query_statement)
+    val non_temporal_query_statement = convert_to_non_temporal(assert_always_true(query_statement)) match {
+      case Some(q) => q
+      case None => return Failure(new Exception("Failed to convert query to non_temporal"))
+    }
 
-    val filtered_kb = filter_time_range(query_range, kb)
+    val non_temporal_query = QuantifiedStatement(quantifer, arguments, non_temporal_query_statement)
+
+    val filtered_kb = filter_time_range(query_range, knowledge_base)
 
     val non_temporal_kb = no_none(
       filtered_kb.map(assert_always_true _ andThen convert_to_non_temporal)
@@ -27,8 +62,7 @@ object TemporalReasoner {
       case Some(kb) => kb
     }
 
-    val answer_tuples = null
-    throw new NotImplementedError()
+    Reasoner.answer_tuples(non_temporal_kb, non_temporal_query)
   }
 
   def filter_time_range(range: TimeRange, statements: List[TemporalStatement]): List[TemporalStatement] =
@@ -42,7 +76,7 @@ object TemporalReasoner {
       case None => true
       case Some(statement_start_timestamp) => start match {
         case None => false
-        case Some(start_timestamp) => start_timestamp > statement_start_timestamp
+        case Some(start_timestamp) => start_timestamp >= statement_start_timestamp
       }
     }
 
@@ -50,7 +84,7 @@ object TemporalReasoner {
       case None => true
       case Some(statement_end_timestamp) => end match {
         case None => false
-        case Some(end_timestamp) => end_timestamp < statement_end_timestamp
+        case Some(end_timestamp) => end_timestamp <= statement_end_timestamp
       }
     }
 
@@ -106,4 +140,18 @@ object TemporalReasoner {
   def no_none[A](list: List[Option[A]]): Option[List[A]] = list.foldRight(Some(List()) : Option[List[A]])((next, acc) => {
     acc.flatMap(ls => next.map(nxt => nxt :: ls))
   })
+
+  def substitute_constant_set(query: TemporalStatement, answer: ConstantSet): Try[TemporalStatement] =
+    query match {
+      case TrueAlwaysStatement(QuantifiedAlwaysStatement(quantifier, ConstantSetQuantifierArguments(variables, PatternVar(_)), statement)) => {
+        Success(
+          TrueAlwaysStatement(QuantifiedAlwaysStatement(
+            quantifier,
+            ConstantSetQuantifierArguments(variables, answer), statement
+          ))
+        )
+      }
+
+      case _ => throw new Error("expected quantified top-level statement")
+    }
 }
