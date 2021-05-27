@@ -35,20 +35,25 @@ object TemporalReasoner {
       .map(Reasoner.to_constant_set _)
       .flatMap(substitute_constant_set(query, _))
 
-
-  def answer_to_constant_set(knowledge_base: List[TemporalStatement], query: TemporalStatement): Try[List[List[QuotedString]]] = {
-    val (quantifer, arguments, query_statement) = query match {
+  def extract_query_info(query: TemporalStatement): Try[(Quantifier, QuantifierArguments, Statement, TimeRange)] = query match {
       case TrueAlwaysStatement(QuantifiedAlwaysStatement(quantifier, arguments, statement)) => {
-        (quantifier, arguments, statement)
+        convert_to_non_temporal(statement) match {
+          case Some(non_temporal_statement) => Success((quantifier, arguments, non_temporal_statement, TimeRange(None, None)))
+          case None => Failure(Query_parse_exception("The query can only contain temporal constructs at the top-level"))
+        }
       }
 
-      case _ => throw new Error("expected quantified top-level statement")
-    }
+      case TrueRangeStatement(range, QuantifiedStatement(quantifier, quantifier_arguments, inner_statement)) =>
+        Success((quantifier, quantifier_arguments, inner_statement, range))
+    
 
-    val query_range = extract_time_range(query_statement)
-    val non_temporal_query_statement = convert_to_non_temporal(assert_always_true(query_statement)) match {
-      case Some(q) => q
-      case None => return Failure(new Exception("Failed to convert query to non_temporal"))
+      case _ => Failure(Query_parse_exception("Expected query to start with either a quantifier or a temporal construct"))
+  }
+
+  def answer_to_constant_set(knowledge_base: List[TemporalStatement], query: TemporalStatement): Try[List[List[QuotedString]]] = {
+    val (quantifer, arguments, non_temporal_query_statement, query_range) = extract_query_info(query) match {
+      case Success(info) => info
+      case Failure(err) => return Failure(err)
     }
 
     val non_temporal_query = QuantifiedStatement(quantifer, arguments, non_temporal_query_statement)
