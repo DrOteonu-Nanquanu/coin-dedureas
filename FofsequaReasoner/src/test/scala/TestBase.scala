@@ -1,4 +1,4 @@
-import org.nanquanu.fofsequa_reasoner
+    import org.nanquanu.fofsequa_reasoner
 import org.nanquanu.fofsequa_reasoner.eprover.Eprover
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -70,5 +70,19 @@ class Test_base extends AnyFlatSpec {
       case Success(answer) => println(answer)
       case Failure(err) => throw err
     }
+  }
+
+  "Temporal file" should "answer correctly" in {
+    val file_text = fofsequa_reasoner.FofsequaReasoner.read_file("test_temp_fofsequa_kb.fsq") match {
+      case Failure(err) => throw err
+      case Success(text) => text
+    }
+
+    val answer = fofsequa_reasoner.temporal.TemporalReasoner.answer(file_text, "ValidBetween(1, 2, ![x from s_]: Q(x))") match {
+      case Failure(err) => throw err
+      case Success(answer) => answer
+    }
+
+    println(answer)
   }
 }

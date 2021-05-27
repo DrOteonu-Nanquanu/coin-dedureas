@@ -156,6 +156,19 @@ object TemporalReasoner {
           ))
         )
       }
+      case TrueRangeStatement(range, QuantifiedStatement(quantifier, ConstantSetQuantifierArguments(variables, PatternVar(_)), statement)) => Success(
+        TrueRangeStatement(
+          range,
+          QuantifiedStatement(
+            quantifier,
+            ConstantSetQuantifierArguments(
+              variables,
+              answer
+            ),
+            statement
+          )
+        )
+      )
 
       case _ => throw new Error("expected quantified top-level statement")
     }
